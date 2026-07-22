@@ -1,0 +1,33 @@
+# Name that we're going to provide to the group of containers
+# We'll see that in docker desktop once we start the containers
+name: Django-ORM-Mastery
+
+
+# Define our first service
+services:
+  postgres:
+    image: postgres:latest  # Using our downloaded image and it's version
+    container_name: postgres_db # naming the container
+    restart: always # Ensuring the database automatically comes back online if it ever stops unexpectedly
+    # We need to provide some data in order to start our Postgres software in the container
+    # We are passing in env variables for the database
+    # Docker will read .env file
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWROD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+  
+  django:
+    build: .
+    container_name: django_app
+    restart: always
+    depends_on:
+      - postgres
+    volumes:
+      - ./app:/app  # bind our app directory to the app directory inside the container
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env  # loading our environment variables from our .env file
