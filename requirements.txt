@@ -1,4 +1,4 @@
 django==5.2
-psycopg[binary,async]==3.2.6
+psycopg[binary,async]
 uvicorn==0.30.1
 django-ninja==1.4.1
