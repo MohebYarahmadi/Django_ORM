@@ -4,7 +4,9 @@ from django.db import models
 # Category Model
 # -------------------------------------
 class Category(models.Model):
-	pass
+	name  = models.CharField(max_length=50)
+	is_active = models.BooleanField(default=False)
+	level = models.SmallIntegerField()
 
 	class Meta:
 		db_table = 'category'
@@ -21,7 +23,8 @@ class PromotionEvent(models.Model):
 # Product Model
 # -------------------------------------
 class Product(models.Model):
-	pass
+	description = models.TextField()
+	price = models.DecimalField(max_digits=10, decimal_places=2)
 
 
 # -------------------------------------
