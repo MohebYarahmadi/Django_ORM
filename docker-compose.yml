@@ -45,8 +45,5 @@ services:
           python manage.py migrate inventory &&
           python manage.py shell -c 'from django.contrib.auth.models import User; User.objects.create_superuser(\"admin\", \"admin@example.com\", \"admin\")';
         fi &&
-        echo 'Cleaning and collecting static files' &&
-        rm -rf static &&
-        python manage.py collectstatic --noinput &&
         uvicorn core.asgi:application --host 0.0.0.0 --port 8000 --reload
       "

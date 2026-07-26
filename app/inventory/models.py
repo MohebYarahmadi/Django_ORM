@@ -66,7 +66,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     # Relations
-    category = models.ForeignKey(Category, on_delete=models.RESTRICT)
+    category = models.ForeignKey(Category, on_delete=models.RESTRICT, related_name="products")
     promotion_events = models.ManyToManyField(
         PromotionEvent,
         through="ProductPromotionEvent",  # use our custom link model
@@ -88,7 +88,7 @@ class ProductPromotionEvent(models.Model):  # our custom link model
         constraints = [
             UniqueConstraint(
                 fields=["product", "promotion_event"],
-                name="unique_product_per_category",
+                name="unique_product_per_promotion_event",
             )
         ]
 
@@ -143,8 +143,4 @@ class OrderProduct(models.Model):
     quantity = models.IntegerField()
 
     class Meta:
-        constraints = [
-            UniqueConstraint(
-                fields=["product", "order"], name="unique_product_per_category"
-            )
-        ]
+        unique_together = ("product", "order")
