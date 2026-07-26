@@ -10,14 +10,35 @@ class Category(models.Model):
 	level = models.SmallIntegerField()
 
 	class Meta:
+		verbose_name = 'Category'
+		verbose_name_plural = 'categories'
 		db_table = 'category'
+		ordering = ["-name"]
+
+
+# -------------------------------------
+# Custom Enumeration Classes
+# -------------------------------------
+class DiscountLevel(models.IntegerChoices):
+	TEN = 10, "10%"
+	TWENTY = 20, "20%"
+	FIFTY = 50, "50%"
+
+
+class Status(models.TextChoices):
+	PENDING = "PEN", "Pending"
+	APPROVED = "APP", "Approved"
+	REJECTED = "REJ", "Rejected"
 
 
 # -------------------------------------
 # Promotion Event Model
 # -------------------------------------
 class PromotionEvent(models.Model):
-	pass
+	name = models.CharField(max_length=50, unique=True)
+	start_date = models.DateTimeField()
+	end_date = models.DateTimeField()
+	price_reduction = models.IntegerField(choices=DiscountLevel.choices,)	# Use our Custom Enumeration Class
 
 
 # -------------------------------------
