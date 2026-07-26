@@ -22,6 +22,8 @@ class Category(models.Model):
         db_table = 'category'
         ordering = ["-name"]
 
+    def __str__(self):
+        return self.name
 
 # -------------------------------------
 # Custom Enumeration Classes
@@ -51,6 +53,8 @@ class PromotionEvent(models.Model):
     class Meta:
         ordering = ["-start_date"]
 
+    def __str__(self):
+        return self.name
 
 # -------------------------------------
 # Product Model
@@ -75,6 +79,8 @@ class Product(models.Model):
     class Meta:
         ordering = ['name']
 
+    def __str__(self):
+        return self.name
 
 # -------------------------------------
 # Product Promotion Event Model (-M:M-Custom Link Model-)
@@ -92,6 +98,8 @@ class ProductPromotionEvent(models.Model):  # our custom link model
             )
         ]
 
+    def __str__(self):
+        return f"{self.product.name} – {self.promotion_event.name}"
 
 # -------------------------------------
 # Stock Management Model
@@ -106,6 +114,9 @@ class StockManagement(models.Model):
     quantity = models.IntegerField(default=0)
     last_checked_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"Stock: {self.product.name} – {self.quantity} units"
+
 # -------------------------------------
 # User Model
 # -------------------------------------
@@ -118,6 +129,9 @@ class User(models.Model):
 
     class Meta:
         ordering = ["username"]
+
+    def __str__(self):
+        return self.username
 
 
 # -------------------------------------
@@ -133,6 +147,9 @@ class Order(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
+    def __str__(self):
+        return f"Order {self.id} by {self.user.username}"
+
 
 # -------------------------------------
 # Order Product Model
@@ -144,3 +161,6 @@ class OrderProduct(models.Model):
 
     class Meta:
         unique_together = ("product", "order")
+
+    def __str__(self):
+        return f"{self.product.name} x{self.quantity} in Order {self.order.id}"
