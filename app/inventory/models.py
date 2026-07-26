@@ -63,7 +63,7 @@ class Product(models.Model):
     is_digital = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     # Relations
     category = models.ForeignKey(Category, on_delete=models.RESTRICT, related_name="products")
