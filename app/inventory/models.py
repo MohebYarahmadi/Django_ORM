@@ -61,8 +61,7 @@ class ProductPromotionEvent(models.Model):	# our custom link model
 # Stock Management Model
 # -------------------------------------
 class StockManagement(models.Model):
-	pass
-
+	product = models.OneToOneField(Product, on_delete=models.CASCADE)
 
 # -------------------------------------
 # User Model
