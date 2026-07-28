@@ -28,6 +28,16 @@ class CategoryBulkIn(Schema):
     parent_id: Optional[int] = None
 
 
+# ==========================================
+# Schema: Category Update In
+# ==========================================
+class CategoryUpdateIn(Schema):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    is_active: Optional[bool] = None
+    parent_id: Optional[int] = None
+
+
 
 @router.post(
     "/category/create",
@@ -83,3 +93,28 @@ def bulk_create_categories(request, data: List[CategoryBulkIn]):
     ]
     Category.objects.bulk_create(categories)
     return
+
+
+
+@router.put(
+    '/category/update/{category_id}',
+    tags=['module4'],
+    summary='Update an existing category by ID (partial update)'
+)
+def update_category(request, category_id: int, data: CategoryUpdateIn):
+    try:
+        category = Category.objects.get(id=category_id)
+    except Category.DoesNotExist:
+        return {"error": "Category not found."}
+
+    if data.name is not None:
+        category.name = data.name
+    if data.slug is not None:
+        category.slug = data.slug
+    if data.is_active is not None:
+        category.is_active = data.is_active
+    if data.parent_id is not None:
+        category.parent_id = data.parent_id
+
+    category.save()
+    return {'status': 'updated'}
