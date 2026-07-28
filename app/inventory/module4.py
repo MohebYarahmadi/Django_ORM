@@ -97,9 +97,9 @@ def bulk_create_categories(request, data: List[CategoryBulkIn]):
 
 
 @router.put(
-    '/category/update/{category_id}',
+    '/category/update/full/{category_id}',
     tags=['module4'],
-    summary='Update an existing category by ID (partial update)'
+    summary='Update an existing category by ID (full update)'
 )
 def update_category(request, category_id: int, data: CategoryUpdateIn):
     try:
@@ -118,3 +118,35 @@ def update_category(request, category_id: int, data: CategoryUpdateIn):
 
     category.save()
     return {'status': 'updated'}
+
+
+@router.put(
+    '/category/update/partial/{category_id}',
+    tags=['module4'],
+    summary='Update an existing category by ID (partial update)'
+)
+def partial_update_category(request, category_id: int, data: CategoryUpdateIn):
+    try:
+        category = Category.objects.get(id=category_id)
+    except Category.DoesNotExist:
+        return {'error': 'Category not found.'}
+
+    udpated_fields = []
+
+    if data.name is not None:
+        category.name = data.name
+        udpated_fields.append('name')
+    if data.slug is not None:
+            category.slug = data.slug
+            udpated_fields.append('slug')
+    if data.is_active is not None:
+            category.is_active = data.is_active
+            udpated_fields.append('is_active')
+    if data.parent_id is not None:
+            category.parent_id = data.parent_id
+            udpated_fields.append('parent_id')
+
+    if udpated_fields:
+         category.save(update_fields=udpated_fields)
+
+    return {'status': 'updated', 'fields_updated': udpated_fields}
