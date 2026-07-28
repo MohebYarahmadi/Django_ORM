@@ -7,8 +7,6 @@ from inventory.models import Category
 router = Router()
 
 # Create schema for Category in
-
-
 class CategoryIn(Schema):
     name: str
     slug: str

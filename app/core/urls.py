@@ -21,7 +21,7 @@ from django.urls import path
 
 
 # Import your Ninja API instance
-from inventory.api import (
+from .api import (
 	api,
 )
 
