@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from ninja import Router, Schema
 from django.utils.text import slugify
 
@@ -7,12 +7,26 @@ from inventory.models import Category
 router = Router()
 
 # Create schema for Category in
+# ==========================================
+# Schema: Category In
+# ==========================================
 class CategoryIn(Schema):
     name: str
     slug: str
     is_active: bool
     level: Optional[int] = 0
     parent_id: Optional[int] = None
+
+
+# ==========================================
+# Schema: Category Bulk In
+# ==========================================
+class CategoryBulkIn(Schema):
+    name: str
+    slug: str
+    is_active: bool = True
+    parent_id: Optional[int] = None
+
 
 
 @router.post(
@@ -49,4 +63,23 @@ def create_category_save(request, data: CategoryIn):
     )
     category.save()
     # return {'id': category.id, 'message': 'Category saved successfully.'}
+    return
+
+
+
+@router.post(
+    "/create/bulk",
+    tags=["module4"],
+    summary="Create multiple categories with bulk_create()",
+)
+def bulk_create_categories(request, data: List[CategoryBulkIn]):
+    categories = [
+        Category(
+            name=item.name,
+            slug=item.slug,
+            is_active=item.is_active,
+            parent_id=item.parent_id,
+        ) for item in data
+    ]
+    Category.objects.bulk_create(categories)
     return
