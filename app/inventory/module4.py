@@ -56,6 +56,13 @@ class CategoryBulkUpdateIn(Schema):
     level: int
     is_active: Optional[bool] = None
 
+# ==========================================
+# Schema: Category Bulk Update In for update()
+# ==========================================
+class CategoryActivateFilterIn(Schema):
+     level: Optional[int] = None
+     is_active: Optional[bool] = False
+
 
 @router.post(
     "/category/create",
@@ -221,3 +228,19 @@ def bulk_update_categories(request, data: List[CategoryBulkUpdateIn]):
      }
 
 
+@router.put(
+     'category/udpate/activate',
+     tags=['module4'],
+     summary='Activate categories using .update() on filtered queryset.'
+)
+def activate_categories(request, data: CategoryActivateFilterIn):
+     filters = {'is_active': data.is_active}
+     if data.level is not None:
+          filters['level'] = data.level
+
+     updated_cound = Category.objects.filter(**filters).update(is_active=True)
+
+     return {
+          'status': 'updated',
+          'updated_count': updated_cound,
+     }
