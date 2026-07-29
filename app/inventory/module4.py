@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from ninja import Router, Schema
 from django.utils.text import slugify
 
@@ -7,14 +7,61 @@ from inventory.models import Category
 router = Router()
 
 # Create schema for Category in
-
-
+# ==========================================
+# Schema: Category In
+# ==========================================
 class CategoryIn(Schema):
     name: str
     slug: str
     is_active: bool
     level: Optional[int] = 0
     parent_id: Optional[int] = None
+
+
+# ==========================================
+# Schema: Category Bulk In
+# ==========================================
+class CategoryBulkIn(Schema):
+    name: str
+    slug: str
+    is_active: bool = True
+    parent_id: Optional[int] = None
+
+
+# ==========================================
+# Schema: Category Update In
+# ==========================================
+class CategoryUpdateIn(Schema):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    is_active: Optional[bool] = None
+    parent_id: Optional[int] = None
+
+
+# ==========================================
+# Schema: Category Update or Create In
+# ==========================================
+class CategoryUpsertInt(Schema):
+    name: str  # name has to be supplied, a mandatory
+    slug: Optional[str] = None
+    is_active: Optional[bool] = None
+    parent_it: Optional[int] = None
+
+
+# ==========================================
+# Schema: Category Bulk Update In
+# ==========================================
+class CategoryBulkUpdateIn(Schema):
+    id: int
+    level: int
+    is_active: Optional[bool] = None
+
+# ==========================================
+# Schema: Category Bulk Update In for update()
+# ==========================================
+class CategoryActivateFilterIn(Schema):
+     level: Optional[int] = None
+     is_active: Optional[bool] = False
 
 
 @router.post(
@@ -52,3 +99,148 @@ def create_category_save(request, data: CategoryIn):
     category.save()
     # return {'id': category.id, 'message': 'Category saved successfully.'}
     return
+
+
+@router.post(
+    "/create/bulk",
+    tags=["module4"],
+    summary="Create multiple categories with bulk_create()",
+)
+def bulk_create_categories(request, data: List[CategoryBulkIn]):
+    categories = [
+        Category(
+            name=item.name,
+            slug=item.slug,
+            is_active=item.is_active,
+            parent_id=item.parent_id,
+        ) for item in data
+    ]
+    Category.objects.bulk_create(categories)
+    return
+
+
+@router.put(
+    '/category/update/full/{category_id}',
+    tags=['module4'],
+    summary='Update an existing category by ID (full update)'
+)
+def update_category(request, category_id: int, data: CategoryUpdateIn):
+    try:
+        category = Category.objects.get(id=category_id)
+    except Category.DoesNotExist:
+        return {"error": "Category not found."}
+
+    if data.name is not None:
+        category.name = data.name
+    if data.slug is not None:
+        category.slug = data.slug
+    if data.is_active is not None:
+        category.is_active = data.is_active
+    if data.parent_id is not None:
+        category.parent_id = data.parent_id
+
+    category.save()
+    return {'status': 'updated'}
+
+
+@router.put(
+    '/category/update/partial/{category_id}',
+    tags=['module4'],
+    summary='Update an existing category by ID (partial update)'
+)
+def partial_update_category(request, category_id: int, data: CategoryUpdateIn):
+    try:
+        category = Category.objects.get(id=category_id)
+    except Category.DoesNotExist:
+        return {'error': 'Category not found.'}
+
+    udpated_fields = []
+
+    if data.name is not None:
+        category.name = data.name
+        udpated_fields.append('name')
+    if data.slug is not None:
+            category.slug = data.slug
+            udpated_fields.append('slug')
+    if data.is_active is not None:
+            category.is_active = data.is_active
+            udpated_fields.append('is_active')
+    if data.parent_id is not None:
+            category.parent_id = data.parent_id
+            udpated_fields.append('parent_id')
+
+    if udpated_fields:
+         category.save(update_fields=udpated_fields)
+
+    return {'status': 'updated', 'fields_updated': udpated_fields}
+
+
+@router.post(
+     '/category/upsert',
+     tags=['module4'],
+     summary='Update or Create a category by name.'
+)
+def upsert_category(request, data: CategoryUpsertInt):
+     category, created = Category.objects.update_or_create(
+          name=data.name,
+          defaults={
+               'name': data.name,
+               'slug': data.slug,
+               'is_active': data.is_active,
+               'parent_id': data.parent_it,
+          },
+     )
+
+     return {
+          'status': 'created' if created else 'updated',
+          'id': category.id,
+          'name': category.name,
+     }
+
+
+@router.put(
+     '/category/bulk-update',
+     tags=['module4'],
+     summary='Bulk update status and level using .bulk_update() method.'
+)
+def bulk_update_categories(request, data: List[CategoryBulkUpdateIn]):
+     # extract all the ids from incoming request data
+     ids = [item.id for item in data]
+
+     # quick lookup map by turning incoming list of updates into a dict
+     # where each ID points to its corresponding update payload.
+     category_map = {item.id: item for item in data}
+
+     categories = Category.objects.filter(id__in=ids)  # query the database
+
+     for cat in categories:
+          item = category_map.get(cat.id)
+          if item:
+               cat.level = item.level
+               if item.is_active is not None:
+                    cat.is_active = item.is_active
+
+     Category.objects.bulk_update(categories, ['level', 'is_active'])
+
+     return {
+          'status': 'bulk_updated',
+          'updated_count': len(categories),
+     }
+
+
+@router.put(
+     'category/udpate/activate',
+     tags=['module4'],
+     summary='Activate categories using .update() on filtered queryset.'
+)
+def activate_categories(request, data: CategoryActivateFilterIn):
+     filters = {'is_active': data.is_active}
+     if data.level is not None:
+          filters['level'] = data.level
+
+     updated_cound = Category.objects.filter(**filters).update(is_active=True)
+
+     return {
+          'status': 'updated',
+          'updated_count': updated_cound,
+     }

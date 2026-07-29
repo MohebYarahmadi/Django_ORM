@@ -23,7 +23,7 @@ class Category(models.Model):
         ordering = ["-name"]
 
     def __str__(self):
-        return self.name
+        return f'{self.id}-{self.name}'
 
 # -------------------------------------
 # Custom Enumeration Classes
