@@ -2,11 +2,13 @@ from typing import Optional, List
 from ninja import Router, Schema
 from django.utils.text import slugify
 
-from inventory.models import Category
+from inventory.models import (
+	Category, Product
+)
 
 router = Router()
 
-# Create schema for Category in
+#region CATEGORY
 # ==========================================
 # Schema: Category In
 # ==========================================
@@ -55,6 +57,7 @@ class CategoryBulkUpdateIn(Schema):
     id: int
     level: int
     is_active: Optional[bool] = None
+
 
 # ==========================================
 # Schema: Category Bulk Update In for update()
@@ -244,3 +247,72 @@ def activate_categories(request, data: CategoryActivateFilterIn):
           'status': 'updated',
           'updated_count': updated_cound,
      }
+#endregion
+
+#region PRODUCT
+# ==========================================
+# Schema: Create Product with category_id
+# ==========================================
+class ProductCreateIn(Schema):
+    name: str
+    slug: str
+    price: float
+    is_active: Optional[bool] = True
+    is_digital: Optional[bool] = False
+    category_id: int    # client provides this
+
+
+@router.post(
+     'product/create',
+     tags=['module4'],
+     summary='Create a new product with category_id'
+)
+def create_product(request, data: ProductCreateIn):
+     Product.objects.create(
+          name=data.name,
+          slug=data.slug,
+          price=data.price,
+          is_active=data.is_active,
+          is_digital=data.is_digital,
+          category_id=data.category_id,
+     )
+     return {'status': 'created', 'product': data.name}
+
+
+# ==========================================
+# Schema: Create Product with category lookup
+# ==========================================
+class ProductCreateWithLookupIn(Schema):
+    name: str
+    slug: str
+    price: float
+    is_active: Optional[bool] = True
+    is_digital: Optional[bool] = False
+    category_id: int    # client provides this
+
+
+@router.post(
+     'product/create/with-category-lookup',
+     tags=['module4'],
+     summary='Create a product using a fetched category instance'
+)
+def create_product_with_instance(request, data: ProductCreateWithLookupIn):
+     try:
+          category = Category.objects.get(id=data.category_id)  # use category_id to search
+     except Category.DoesNotExist:
+          return {'error', 'Category not found.'}
+
+     product = Product(
+          name=data.name,
+          slug=data.slug,
+          price=data.price,
+          is_active=data.is_active,
+          is_digital=data.is_digital,
+          category=category     # using full instance
+     )
+
+     product.save()
+
+     return {'status': 'created', 'product': product.name, 'category': category.name}
+
+#endregion
