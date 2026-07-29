@@ -38,6 +38,24 @@ class CategoryUpdateIn(Schema):
     parent_id: Optional[int] = None
 
 
+# ==========================================
+# Schema: Category Update or Create In
+# ==========================================
+class CategoryUpsertInt(Schema):
+    name: str  # name has to be supplied, a mandatory
+    slug: Optional[str] = None
+    is_active: Optional[bool] = None
+    parent_it: Optional[int] = None
+
+
+# ==========================================
+# Schema: Category Bulk Update In
+# ==========================================
+class CategoryBulkUpdateIn(Schema):
+    id: int
+    level: int
+    is_active: Optional[bool] = None
+
 
 @router.post(
     "/category/create",
@@ -76,7 +94,6 @@ def create_category_save(request, data: CategoryIn):
     return
 
 
-
 @router.post(
     "/create/bulk",
     tags=["module4"],
@@ -93,7 +110,6 @@ def bulk_create_categories(request, data: List[CategoryBulkIn]):
     ]
     Category.objects.bulk_create(categories)
     return
-
 
 
 @router.put(
@@ -150,3 +166,58 @@ def partial_update_category(request, category_id: int, data: CategoryUpdateIn):
          category.save(update_fields=udpated_fields)
 
     return {'status': 'updated', 'fields_updated': udpated_fields}
+
+
+@router.post(
+     '/category/upsert',
+     tags=['module4'],
+     summary='Update or Create a category by name.'
+)
+def upsert_category(request, data: CategoryUpsertInt):
+     category, created = Category.objects.update_or_create(
+          name=data.name,
+          defaults={
+               'name': data.name,
+               'slug': data.slug,
+               'is_active': data.is_active,
+               'parent_id': data.parent_it,
+          },
+     )
+
+     return {
+          'status': 'created' if created else 'updated',
+          'id': category.id,
+          'name': category.name,
+     }
+
+
+@router.put(
+     '/category/bulk-update',
+     tags=['module4'],
+     summary='Bulk update status and level using .bulk_update() method.'
+)
+def bulk_update_categories(request, data: List[CategoryBulkUpdateIn]):
+     # extract all the ids from incoming request data
+     ids = [item.id for item in data]
+
+     # quick lookup map by turning incoming list of updates into a dict
+     # where each ID points to its corresponding update payload.
+     category_map = {item.id: item for item in data}
+
+     categories = Category.objects.filter(id__in=ids)  # query the database
+
+     for cat in categories:
+          item = category_map.get(cat.id)
+          if item:
+               cat.level = item.level
+               if item.is_active is not None:
+                    cat.is_active = item.is_active
+
+     Category.objects.bulk_update(categories, ['level', 'is_active'])
+
+     return {
+          'status': 'bulk_updated',
+          'updated_count': len(categories),
+     }
+
+
