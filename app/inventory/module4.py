@@ -248,6 +248,26 @@ def activate_categories(request, data: CategoryActivateFilterIn):
           'status': 'updated',
           'updated_count': updated_cound,
      }
+
+
+@router.delete(
+    'category/delete/{category_id}',
+    tags=['module4'],
+    summary='Delete a category by ID'
+)
+def delete_category(request, category_id: int):
+    try:
+        category = Category.objects.get(id=category_id)
+        deleted_count, deleted_detail = category.delete()
+        return {
+             'status': 'deleted',
+             'deleted_cound': deleted_count,
+             'category_id': category_id,
+             'detail': deleted_detail,
+        }
+    except Category.DoesNotExist:
+        return {'error': 'Category not found!'}
+
 #endregion
 
 #region PRODUCT
@@ -431,5 +451,6 @@ def create_order_with_m2m(request, data: OrderWithProductsIn):
         'order_id': order.id,
         'linked_with': 'M:M add() + through_defaults',
     }
+
 
 #endregion
