@@ -68,6 +68,13 @@ class CategoryActivateFilterIn(Schema):
      is_active: Optional[bool] = False
 
 
+# ==========================================
+# Schema: Category Bulk Delete
+# ==========================================
+class CategoryBulkDeleteIn(Schema):
+    ids: List[int]
+
+
 @router.post(
     "/category/create",
     tags=["module4"],
@@ -267,6 +274,25 @@ def delete_category(request, category_id: int):
         }
     except Category.DoesNotExist:
         return {'error': 'Category not found!'}
+
+
+@router.delete(
+    'category/bulk-delete',
+    tags=['module4'],
+    summary='Bulk delete categories by IDs.'
+)
+def bulk_delete_categories(request, data: CategoryBulkDeleteIn):
+    queryset = Category.objects.filter(id__in=data.ids) # Schema ids
+    if not queryset.exists():
+        return {'error': 'No matching categories found to delete.'}
+
+    deleted_count, deleted_detail = queryset.delete()
+
+    return {
+        'status': 'bulk_deleted',
+        'deleted_count': deleted_count,
+        'detail': deleted_detail,
+    }
 
 #endregion
 

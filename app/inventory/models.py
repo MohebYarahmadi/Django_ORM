@@ -4,8 +4,6 @@ from django.db.models import UniqueConstraint
 # -------------------------------------
 # Category Model
 # -------------------------------------
-
-
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=55, unique=True)
@@ -120,8 +118,6 @@ class StockManagement(models.Model):
 # -------------------------------------
 # User Model
 # -------------------------------------
-
-
 class User(models.Model):
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=255, unique=True)
