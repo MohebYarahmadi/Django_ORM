@@ -2,11 +2,14 @@ from typing import Optional, List
 from ninja import Router, Schema
 from django.utils.text import slugify
 
-from inventory.models import Category
+from inventory.models import (
+	Category, Product, StockManagement,
+    Order, OrderProduct, User
+)
 
 router = Router()
 
-# Create schema for Category in
+#region CATEGORY
 # ==========================================
 # Schema: Category In
 # ==========================================
@@ -56,12 +59,20 @@ class CategoryBulkUpdateIn(Schema):
     level: int
     is_active: Optional[bool] = None
 
+
 # ==========================================
 # Schema: Category Bulk Update In for update()
 # ==========================================
 class CategoryActivateFilterIn(Schema):
      level: Optional[int] = None
      is_active: Optional[bool] = False
+
+
+# ==========================================
+# Schema: Category Bulk Delete
+# ==========================================
+class CategoryBulkDeleteIn(Schema):
+    ids: List[int]
 
 
 @router.post(
@@ -244,3 +255,228 @@ def activate_categories(request, data: CategoryActivateFilterIn):
           'status': 'updated',
           'updated_count': updated_cound,
      }
+
+
+@router.delete(
+    'category/delete/{category_id}',
+    tags=['module4'],
+    summary='Delete a category by ID'
+)
+def delete_category(request, category_id: int):
+    try:
+        category = Category.objects.get(id=category_id)
+        deleted_count, deleted_detail = category.delete()
+        return {
+             'status': 'deleted',
+             'deleted_cound': deleted_count,
+             'category_id': category_id,
+             'detail': deleted_detail,
+        }
+    except Category.DoesNotExist:
+        return {'error': 'Category not found!'}
+
+
+@router.delete(
+    'category/bulk-delete',
+    tags=['module4'],
+    summary='Bulk delete categories by IDs.'
+)
+def bulk_delete_categories(request, data: CategoryBulkDeleteIn):
+    queryset = Category.objects.filter(id__in=data.ids) # Schema ids
+    if not queryset.exists():
+        return {'error': 'No matching categories found to delete.'}
+
+    deleted_count, deleted_detail = queryset.delete()
+
+    return {
+        'status': 'bulk_deleted',
+        'deleted_count': deleted_count,
+        'detail': deleted_detail,
+    }
+
+#endregion
+
+#region PRODUCT
+# ==========================================
+# Schema: Create Product with category_id
+# ==========================================
+class ProductCreateIn(Schema):
+    name: str
+    slug: str
+    price: float
+    is_active: Optional[bool] = True
+    is_digital: Optional[bool] = False
+    category_id: int    # client provides this
+
+
+# ==========================================
+# Schema: Create Product with category lookup
+# ==========================================
+class ProductCreateWithLookupIn(Schema):
+    name: str
+    slug: str
+    price: float
+    is_active: Optional[bool] = True
+    is_digital: Optional[bool] = False
+    category_id: int    # client provides this
+
+
+# ==========================================
+# Schema: Product + Stock: (1:1) Insert
+# ==========================================
+class ProductWithStockIn(Schema):
+    name: str
+    slug: str
+    price: float
+    is_active:Optional[bool] = True
+    is_digital: Optional[bool] = False
+    category_id: int
+    stock_quantity: int # need for stockmangement table
+
+
+@router.post(
+     'product/create',
+     tags=['module4'],
+     summary='Create a new product with category_id'
+)
+def create_product(request, data: ProductCreateIn):
+     Product.objects.create(
+          name=data.name,
+          slug=data.slug,
+          price=data.price,
+          is_active=data.is_active,
+          is_digital=data.is_digital,
+          category_id=data.category_id,
+     )
+     return {'status': 'created', 'product': data.name}
+
+
+@router.post(
+     'product/create/with-category-lookup',
+     tags=['module4'],
+     summary='Create a product using a fetched category instance'
+)
+def create_product_with_instance(request, data: ProductCreateWithLookupIn):
+     try:
+          category = Category.objects.get(id=data.category_id)  # use category_id to search
+     except Category.DoesNotExist:
+          return {'error', 'Category not found.'}
+
+     product = Product(
+          name=data.name,
+          slug=data.slug,
+          price=data.price,
+          is_active=data.is_active,
+          is_digital=data.is_digital,
+          category=category     # using full instance
+     )
+
+     product.save()
+
+     return {'status': 'created', 'product': product.name, 'category': category.name}
+
+
+@router.post(
+     'product/create/with-stock',
+     tags=['module4'],
+     summary='Create a product and its stock record',
+)
+def create_product_with_stock(request, data: ProductWithStockIn):
+    try:
+         category = Category.objects.get(id=data.category_id)
+    except Category.DoesNotExist:
+         return {'error': 'Category not found.'}
+
+    # Step 1: Create the product (Needs to be created first, the parent record)
+    product = Product.objects.create(
+         name=data.name,
+         slug=data.slug,
+         price=data.price,
+         is_active=data.is_active,
+         is_digital=data.is_digital,
+         category=category, # FK: Using instance
+    )
+
+    # Step 2: Create the related stock record (1:1) (Use product instance)
+    StockManagement.objects.create(product=product, quantity=data.stock_quantity)
+
+    return {
+         'status': 'created',
+         'product': product.name,
+         'stock_quantity': data.stock_quantity,
+    }
+
+
+# ==========================================
+# Schema: Order + Products: (M:M)
+# ==========================================
+class OrderedProductIn(Schema):
+     product_id: int
+     quantity: int
+
+class OrderWithProductsIn(Schema):
+     user_id: int
+     products: List[OrderedProductIn]
+
+
+@router.post(
+     'order/create/manual',
+     tags=['module4'],
+     summary='Create an order and link products using OrderProduct manually.'
+)
+def create_order_with_manual_links(request, data: OrderWithProductsIn):
+    try:
+        user = User.objects.get(id=data.user_id)
+    except User.DoesNotExist:
+        return {'error': 'User not found.'}
+
+    # Step 1: Create the order
+    order = Order.objects.create(user=user)
+
+    # Step 2: Create product links with quantity
+    for item in data.products:
+        try:
+            product = Product.objects.get(id=item.product_id)
+            OrderProduct.objects.create(
+                order=order, product=product, quantity=item.quantity
+            )
+        except Product.DoesNotExist:
+            continue    # Optionally log or collect errors
+
+    return {
+         'status': 'created',
+         'order_id': order.id,
+         'product_count': len(data.products)
+    }
+
+
+@router.post(
+    'order/create/with-through',
+    tags=['module4'],
+    summary='Create order using M:M field with through model (via .add + through_defaults)',
+)
+def create_order_with_m2m(request, data: OrderWithProductsIn):
+    try:
+        user = User.objects.get(id=data.user_id)
+    except User.DoesNotExist:
+        return {'error': 'User not found.'}
+
+    # Step 1: Create the order
+    order = Order.objects.create(user=user)
+
+    # Step 2: Use .add() with through_defaults to link products with quantity
+    for item in data.products:
+        try:
+            product = Product.objects.get(id=item.product_id)
+            order.products.add(product, through_defaults={'quantity': item.quantity})
+        except Product.DoesNotExist:
+            continue    # Optionally log or handle missing product
+
+    return {
+        'status': 'created',
+        'order_id': order.id,
+        'linked_with': 'M:M add() + through_defaults',
+    }
+
+
+#endregion
