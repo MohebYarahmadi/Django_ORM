@@ -3,7 +3,7 @@ from ninja import Router, Schema
 from django.utils.text import slugify
 
 from inventory.models import (
-	Category, Product
+	Category, Product, StockManagement
 )
 
 router = Router()
@@ -274,6 +274,19 @@ class ProductCreateWithLookupIn(Schema):
     category_id: int    # client provides this
 
 
+# ==========================================
+# Schema: Product + Stock: (1:1) Insert
+# ==========================================
+class ProductWithStockIn(Schema):
+    name: str
+    slug: str
+    price: float
+    is_active:Optional[bool] = True
+    is_digital: Optional[bool] = False
+    category_id: int
+    stock_quantity: int # need for stockmangement table
+
+
 @router.post(
      'product/create',
      tags=['module4'],
@@ -314,5 +327,36 @@ def create_product_with_instance(request, data: ProductCreateWithLookupIn):
      product.save()
 
      return {'status': 'created', 'product': product.name, 'category': category.name}
+
+
+@router.post(
+     'product/create/with-stock',
+     tags=['module4'],
+     summary='Create a product and its stock record',
+)
+def create_product_with_stock(request, data: ProductWithStockIn):
+    try:
+         category = Category.objects.get(id=data.category_id)
+    except Category.DoesNotExist:
+         return {'error': 'Category not found.'}
+
+    # Step 1: Create the product (Needs to be created first, the parent record)
+    product = Product.objects.create(
+         name=data.name,
+         slug=data.slug,
+         price=data.price,
+         is_active=data.is_active,
+         is_digital=data.is_digital,
+         category=category, # FK: Using instance
+    )
+
+    # Step 2: Create the related stock record (1:1) (Use product instance)
+    StockManagement.objects.create(product=product, quantity=data.stock_quantity)
+
+    return {
+         'status': 'created',
+         'product': product.name,
+         'stock_quantity': data.stock_quantity,
+    }
 
 #endregion
