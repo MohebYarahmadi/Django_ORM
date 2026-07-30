@@ -33,7 +33,7 @@ class ProductPromotionEventInline(admin.TabularInline):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ["name", "parent", "is_active", "level"]
+    list_display = ["id", "name", "parent", "is_active", "level"]
     search_fields = ["name"]
     list_filter = ["is_active", "level"]
     ordering = ["name"]
@@ -41,7 +41,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ["name", "category", "price", "is_active", "is_digital"]
+    list_display = ["id", "name", "category", "price", "is_active", "is_digital"]
     search_fields = ["name", "slug"]
     list_filter = ["is_active", "is_digital", "category"]
     autocomplete_fields = ["category"]

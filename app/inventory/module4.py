@@ -3,7 +3,8 @@ from ninja import Router, Schema
 from django.utils.text import slugify
 
 from inventory.models import (
-	Category, Product, StockManagement
+	Category, Product, StockManagement,
+    Order, OrderProduct, User
 )
 
 router = Router()
@@ -357,6 +358,49 @@ def create_product_with_stock(request, data: ProductWithStockIn):
          'status': 'created',
          'product': product.name,
          'stock_quantity': data.stock_quantity,
+    }
+
+
+# ==========================================
+# Schema: Order + Products: (M:M)
+# ==========================================
+class OrderedProductIn(Schema):
+     product_id: int
+     quantity: int
+
+class OrderWithProductsIn(Schema):
+     user_id: int
+     products: List[OrderedProductIn]
+
+
+@router.post(
+     'order/create/manual',
+     tags=['module4'],
+     summary='Create an order and link products using OrderProduct manually.'
+)
+def create_order_with_manual_links(request, data: OrderWithProductsIn):
+    try:
+        user = User.objects.get(id=data.user_id)
+    except User.DoesNotExist:
+        return {'error': 'User not found.'}
+
+    # Step 1: Create the order
+    order = Order.objects.create(user=user)
+
+    # Step 2: Create product links with quantity
+    for item in data.products:
+        try:
+            product = Product.objects.get(id=item.product_id)
+            OrderProduct.objects.create(
+                order=order, product=product, quantity=item.quantity
+            )
+        except Product.DoesNotExist:
+            continue    # Optionally log or collect errors
+
+    return {
+         'status': 'created',
+         'order_id': order.id,
+         'product_count': len(data.products)
     }
 
 #endregion
