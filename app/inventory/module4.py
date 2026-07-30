@@ -262,6 +262,18 @@ class ProductCreateIn(Schema):
     category_id: int    # client provides this
 
 
+# ==========================================
+# Schema: Create Product with category lookup
+# ==========================================
+class ProductCreateWithLookupIn(Schema):
+    name: str
+    slug: str
+    price: float
+    is_active: Optional[bool] = True
+    is_digital: Optional[bool] = False
+    category_id: int    # client provides this
+
+
 @router.post(
      'product/create',
      tags=['module4'],
@@ -277,18 +289,6 @@ def create_product(request, data: ProductCreateIn):
           category_id=data.category_id,
      )
      return {'status': 'created', 'product': data.name}
-
-
-# ==========================================
-# Schema: Create Product with category lookup
-# ==========================================
-class ProductCreateWithLookupIn(Schema):
-    name: str
-    slug: str
-    price: float
-    is_active: Optional[bool] = True
-    is_digital: Optional[bool] = False
-    category_id: int    # client provides this
 
 
 @router.post(
