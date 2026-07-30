@@ -143,6 +143,7 @@ class Order(models.Model):
 
     # Relations
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product, through='OrderProduct')
 
     class Meta:
         ordering = ["-created_at"]

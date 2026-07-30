@@ -403,4 +403,33 @@ def create_order_with_manual_links(request, data: OrderWithProductsIn):
          'product_count': len(data.products)
     }
 
+
+@router.post(
+    'order/create/with-through',
+    tags=['module4'],
+    summary='Create order using M:M field with through model (via .add + through_defaults)',
+)
+def create_order_with_m2m(request, data: OrderWithProductsIn):
+    try:
+        user = User.objects.get(id=data.user_id)
+    except User.DoesNotExist:
+        return {'error': 'User not found.'}
+
+    # Step 1: Create the order
+    order = Order.objects.create(user=user)
+
+    # Step 2: Use .add() with through_defaults to link products with quantity
+    for item in data.products:
+        try:
+            product = Product.objects.get(id=item.product_id)
+            order.products.add(product, through_defaults={'quantity': item.quantity})
+        except Product.DoesNotExist:
+            continue    # Optionally log or handle missing product
+
+    return {
+        'status': 'created',
+        'order_id': order.id,
+        'linked_with': 'M:M add() + through_defaults',
+    }
+
 #endregion
