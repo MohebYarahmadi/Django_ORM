@@ -18,6 +18,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # bind our init.sql file to the container's entrypoint directory
+      - ./db-data:/data
   
   django:
     build: .
@@ -32,7 +35,7 @@ services:
     env_file:
       - .env  # loading our environment variables from our .env file
       
-    # automate some creations like migrations, create super user and etc...
+    # automate some creations like migrations, fixtures, create super user and etc...
     command: >
       sh -c "
         if python manage.py shell -c 'from django.contrib.auth.models import User; print(User.objects.filter(username=\"admin\").exists())' | grep -q 'True'; then
@@ -42,11 +45,11 @@ services:
           rm -f inventory/migrations/0001_initial.py &&
           python manage.py migrate &&
           python manage.py makemigrations &&
-          python manage.py migrate inventory &&
+          python manage.py migrate inventory --fake &&
           python manage.py shell -c 'from django.contrib.auth.models import User; User.objects.create_superuser(\"admin\", \"admin@example.com\", \"admin\")';
         fi &&
         echo 'Cleaning and collecting static files' &&
         rm -rf static &&
         python manage.py collectstatic --noinput &&
         uvicorn core.asgi:application --host 0.0.0.0 --port 8000 --reload
-      "
+        "

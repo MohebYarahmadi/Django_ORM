@@ -17,11 +17,11 @@ class Category(models.Model):
     class Meta:
         verbose_name = 'Category'
         verbose_name_plural = 'categories'
-        db_table = 'category'
+        # db_table = 'category'
         ordering = ["-name"]
 
     def __str__(self):
-        return f'{self.id}-{self.name}'
+        return f'{self.name}'
 
 # -------------------------------------
 # Custom Enumeration Classes
@@ -68,11 +68,11 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     # Relations
-    category = models.ForeignKey(Category, on_delete=models.RESTRICT, related_name="products")
-    promotion_events = models.ManyToManyField(
-        PromotionEvent,
-        through="ProductPromotionEvent",  # use our custom link model
-    )
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
+    # promotion_events = models.ManyToManyField(
+    #     PromotionEvent,
+    #     through="ProductPromotionEvent",  # use our custom link model
+    # )
 
     class Meta:
         ordering = ['name']
