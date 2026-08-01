@@ -1,6 +1,7 @@
 from ninja import NinjaAPI
 
 from inventory.module4 import router as router4
+from inventory.module5 import router as router5
 
 api = NinjaAPI(
 	title='Django ORM Mastery API',
@@ -11,3 +12,4 @@ api = NinjaAPI(
 
 # Register route
 api.add_router("mod4/", router4)
+api.add_router("mod4/", router5)

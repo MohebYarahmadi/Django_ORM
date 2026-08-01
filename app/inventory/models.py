@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import UniqueConstraint
 
+
 # -------------------------------------
 # Category Model
 # -------------------------------------
@@ -22,6 +23,7 @@ class Category(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
 
 # -------------------------------------
 # Custom Enumeration Classes
@@ -54,6 +56,7 @@ class PromotionEvent(models.Model):
     def __str__(self):
         return self.name
 
+
 # -------------------------------------
 # Product Model
 # -------------------------------------
@@ -80,6 +83,7 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+
 # -------------------------------------
 # Product Promotion Event Model (-M:M-Custom Link Model-)
 # -------------------------------------
@@ -99,6 +103,7 @@ class ProductPromotionEvent(models.Model):  # our custom link model
     def __str__(self):
         return f"{self.product.name} – {self.promotion_event.name}"
 
+
 # -------------------------------------
 # Stock Management Model
 # -------------------------------------
@@ -114,6 +119,7 @@ class StockManagement(models.Model):
 
     def __str__(self):
         return f"Stock: {self.product.name} – {self.quantity} units"
+
 
 # -------------------------------------
 # User Model
