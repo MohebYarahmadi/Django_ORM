@@ -31,5 +31,32 @@ class CategoryOut(Schema):
 def get_all_categories(request):
 	return Category.objects.all()
 
+
+# ==========================================
+# Schema: Return name & slug only
+# ==========================================
+class CategoryNameSlugOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/all-name-slug',
+	tags=['module5'],
+	summary='Retrieve all categories with name and slug only',
+	response=List[CategoryNameSlugOut]
+)
+def get_category_names(request):
+	# return list(Category.objects.values('name', 'slug'))
+	
+	queryset = Category.objects.values('name', 'slug')
+	# Optional: Modify or preprocess data
+	results = [
+		{'name': item['name'].upper(), 'slug': item['slug']} for item in queryset
+	]
+
+	return results
+
+
 #endregion
 

@@ -12,4 +12,4 @@ api = NinjaAPI(
 
 # Register route
 api.add_router("mod4/", router4)
-api.add_router("mod4/", router5)
+api.add_router("mod5/", router5)
