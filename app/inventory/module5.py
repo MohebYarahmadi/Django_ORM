@@ -58,5 +58,28 @@ def get_category_names(request):
 	return results
 
 
+# ==========================================
+# Schema: Returns name & slug using only()
+# ==========================================
+class CategoryNameSlugOnlyOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/names-optimized',
+	tags=['module5'],
+	summary='Retrieve category names and slug using only()',
+	response=List[CategoryNameSlugOnlyOut]
+)
+def get_category_names_optimized(request):
+	queryset = Category.objects.only('name', 'slug')
+
+	# Prepare data manually from model instances
+	results = [
+		{'name': category.name, 'slug': category.slug} for category in queryset
+	]
+	return results
+
 #endregion
 
