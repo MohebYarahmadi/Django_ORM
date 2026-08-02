@@ -11,6 +11,13 @@ router = Router()
 
 #region CATEGORY
 # ==========================================
+# Schema: 404 Error Schema
+# ==========================================
+class ErrorResponse(Schema):
+	detail: str
+
+
+# ==========================================
 # Schema: Category Out
 # ==========================================
 class CategoryOut(Schema):
@@ -57,6 +64,118 @@ def get_category_names(request):
 
 	return results
 
+
+# ==========================================
+# Schema: Returns name & slug using only()
+# ==========================================
+class CategoryNameSlugOnlyOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/names-optimized',
+	tags=['module5'],
+	summary='Retrieve category names and slug using only()',
+	response=List[CategoryNameSlugOnlyOut]
+)
+def get_category_names_optimized(request):
+	queryset = Category.objects.only('name', 'slug')
+
+	# Prepare data manually from model instances
+	results = [
+		{'name': category.name, 'slug': category.slug} for category in queryset
+	]
+	return results
+
+
+# ==========================================
+# Schema: Filter inactive name & slug using only() and filter()
+# ==========================================
+class CategoryActiveNameSlugOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/inactive-names',
+	tags=['module5'],
+	summary='Retrieve inactive category names and slug using only() and filter()',
+	response={200: List[CategoryActiveNameSlugOut], 404: ErrorResponse},
+)
+def get_inactive_category_names(request):
+	# queryset = Category.objects.only('name', 'slug').filter(is_active=False)
+	queryset = Category.objects.only('name', 'slug').filter(name='Nothing There')	# Return 404
+
+	if not queryset.exists():
+		return 404, {'detail': 'No inactive categories found with that name.'}
+
+	# Prepare data manually from model instances
+	results = [
+		{'name': category.name, 'slug': category.slug} for category in queryset
+	]
+	return results
+
+
+# ==========================================
+# Schema: Exclude archived categories, retun name & slug
+# ==========================================
+class CategoryNameSlugArchivedOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/active-excluding-archived',
+	tags=['module5'],
+	summary="Retrieve active categories excluding 'Archived'",
+	response={200: List[CategoryNameSlugArchivedOut], 404: ErrorResponse},
+)
+def get_active_non_archived_categories(request):
+	queryset = (
+		Category.objects.only('name', 'slug')
+		.filter(is_active=True)
+		.exclude(name='Archived')
+		.order_by('name')
+	)
+
+	if not queryset.exists():
+		return 404, {'detail': 'No active categories found excluding "Archived".'}
+
+	results = [
+		{'name': category.name, 'slug': category.slug} for category in queryset
+	]
+
+	return results
+
+
+# ==========================================
+# Schema: Get first/last active cat by name (ASC)
+# ==========================================
+class CategoryFirstOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/first-active',
+	tags=['module5'],
+	summary='Retrieve the first/last active category by name ASC',
+	response={200: CategoryFirstOut, 404: ErrorResponse}
+)
+def get_first_active_cat_by_name(request):
+	category = (
+		Category.objects.only('name', 'slug')
+		.filter(is_active=True)
+		.order_by('name')
+		.first()
+		# .last()
+	)
+
+	if category is None:
+		return 404, {'detail': 'No active categories found.'}
+
+	return {'name': category.name, 'slug': category.slug}
 
 #endregion
 
