@@ -81,5 +81,29 @@ def get_category_names_optimized(request):
 	]
 	return results
 
+
+# ==========================================
+# Schema: Filter inactive name & slug using only() and filter()
+# ==========================================
+class CategoryActiveNameSlugOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/inactive-names',
+	tags=['module5'],
+	summary='Retrieve inactive category names and slug using only() and filter()',
+	response=List[CategoryActiveNameSlugOut]
+)
+def get_inactive_category_names(request):
+	queryset = Category.objects.only('name', 'slug').filter(is_active=False)
+
+	# Prepare data manually from model instances
+	results = [
+		{'name': category.name, 'slug': category.slug} for category in queryset
+	]
+	return results
+
 #endregion
 
