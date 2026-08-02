@@ -148,5 +148,34 @@ def get_active_non_archived_categories(request):
 
 	return results
 
+
+# ==========================================
+# Schema: Get first/last active cat by name (ASC)
+# ==========================================
+class CategoryFirstOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/first-active',
+	tags=['module5'],
+	summary='Retrieve the first/last active category by name ASC',
+	response={200: CategoryFirstOut, 404: ErrorResponse}
+)
+def get_first_active_cat_by_name(request):
+	category = (
+		Category.objects.only('name', 'slug')
+		.filter(is_active=True)
+		.order_by('name')
+		.first()
+		# .last()
+	)
+
+	if category is None:
+		return 404, {'detail': 'No active categories found.'}
+
+	return {'name': category.name, 'slug': category.slug}
+
 #endregion
 
