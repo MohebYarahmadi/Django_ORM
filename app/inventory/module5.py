@@ -136,6 +136,7 @@ def get_active_non_archived_categories(request):
 		Category.objects.only('name', 'slug')
 		.filter(is_active=True)
 		.exclude(name='Archived')
+		.order_by('name')
 	)
 
 	if not queryset.exists():
