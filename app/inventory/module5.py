@@ -116,5 +116,36 @@ def get_inactive_category_names(request):
 	]
 	return results
 
+
+# ==========================================
+# Schema: Exclude archived categories, retun name & slug
+# ==========================================
+class CategoryNameSlugArchivedOut(Schema):
+	name: str
+	slug: str
+
+
+@router.get(
+	'/category/active-excluding-archived',
+	tags=['module5'],
+	summary="Retrieve active categories excluding 'Archived'",
+	response={200: List[CategoryNameSlugArchivedOut], 404: ErrorResponse},
+)
+def get_active_non_archived_categories(request):
+	queryset = (
+		Category.objects.only('name', 'slug')
+		.filter(is_active=True)
+		.exclude(name='Archived')
+	)
+
+	if not queryset.exists():
+		return 404, {'detail': 'No active categories found excluding "Archived".'}
+
+	results = [
+		{'name': category.name, 'slug': category.slug} for category in queryset
+	]
+
+	return results
+
 #endregion
 
