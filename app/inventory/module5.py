@@ -9,14 +9,18 @@ from inventory.models import (
 
 router = Router()
 
-#region CATEGORY
+
+#region GENERAL SCHEMAS
 # ==========================================
 # Schema: 404 Error Schema
 # ==========================================
 class ErrorResponse(Schema):
 	detail: str
 
+#endregion
 
+
+#region CATEGORY
 # ==========================================
 # Schema: Category Out
 # ==========================================
@@ -179,3 +183,32 @@ def get_first_active_cat_by_name(request):
 
 #endregion
 
+#region PRODUCTS
+# ==========================================
+# Schema: Product Get All Sorted Out
+# ==========================================
+class ProductAllSortedOut(Schema):
+	id: int
+	name: str
+	slug: str
+	description: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/product/all',
+	tags=['Challenge'],
+	summary='Get all products sorted by name DSC',
+	response=List[ProductAllSortedOut],
+)
+def get_all_products_sorted(request):
+	queryset = Product.objects.all().filter(is_active=True).order_by('-name')
+
+	if not queryset.exists():
+		return {'error': 'There is no product'}
+
+	return queryset
+
+
+#endregion
