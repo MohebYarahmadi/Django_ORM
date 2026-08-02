@@ -11,6 +11,13 @@ router = Router()
 
 #region CATEGORY
 # ==========================================
+# Schema: 404 Error Schema
+# ==========================================
+class ErrorResponse(Schema):
+	detail: str
+
+
+# ==========================================
 # Schema: Category Out
 # ==========================================
 class CategoryOut(Schema):
@@ -94,10 +101,14 @@ class CategoryActiveNameSlugOut(Schema):
 	'/category/inactive-names',
 	tags=['module5'],
 	summary='Retrieve inactive category names and slug using only() and filter()',
-	response=List[CategoryActiveNameSlugOut]
+	response={200: List[CategoryActiveNameSlugOut], 404: ErrorResponse},
 )
 def get_inactive_category_names(request):
-	queryset = Category.objects.only('name', 'slug').filter(is_active=False)
+	# queryset = Category.objects.only('name', 'slug').filter(is_active=False)
+	queryset = Category.objects.only('name', 'slug').filter(name='Nothing There')	# Return 404
+
+	if not queryset.exists():
+		return 404, {'detail': 'No inactive categories found with that name.'}
 
 	# Prepare data manually from model instances
 	results = [
