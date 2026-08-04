@@ -257,6 +257,7 @@ class ProductFirstOut(Schema):
 def get_first_product(request):
 	queryset = Product.objects.order_by('created_at').first()	# First
 	# queryset = Product.objects.order_by('-created_at').first() # Most recently added
+	# queryset = Product.objects.order_by('created_at').last() # OR: Most recently added
 
 	if queryset is None:
 		return 404, {'detail', 'No match found'}
