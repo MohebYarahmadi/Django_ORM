@@ -236,7 +236,7 @@ def get_product_only_name_price(request):
 
 
 # ==========================================
-# Schema: Product Onlu Name and Price Ordered
+# Schema: Product First Created
 # ==========================================
 class ProductFirstOut(Schema):
 	id: int
@@ -255,12 +255,18 @@ class ProductFirstOut(Schema):
 	response={200: ProductFirstOut, 404: ErrorResponse},
 )
 def get_first_product(request):
-	queryset = Product.objects.order_by('created_at').first()
+	queryset = Product.objects.order_by('created_at').first()	# First
+	# queryset = Product.objects.order_by('-created_at').first() # Most recently added
 
 	if queryset is None:
 		return 404, {'detail', 'No match found'}
 
 	return queryset
 	
+
+# ==========================================
+# Schema: Product Most Recently
+# ==========================================
+
 
 #endregion
