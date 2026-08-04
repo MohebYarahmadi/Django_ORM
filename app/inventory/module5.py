@@ -293,4 +293,36 @@ def get_all_ex_active(request):
 
 	return queryset
 
+
+# ==========================================
+# Schema: Product Price of 19.99
+# Exclude: category 3
+# ==========================================
+class Product1999(Schema):
+	id: int
+	name: str
+	slug: str
+	description: str
+	price: float
+	is_active: bool
+
+
+@router.get(
+	'/product/price-1999-exclude-cat3',
+	tags=['Challenge'],
+	summary='Get All Products With Price 19.99 Ex cat3',
+	response={200: List[Product1999], 404: ErrorResponse},
+)
+def get_all_1999_ex_cat3(request):
+	queryset = Product.objects.filter(price=19.99).exclude(category=3)
+
+	if not queryset.exists():
+		return {'error': 'There is no product 19.99'}
+
+	return queryset
+
+
+
+
+
 #endregion
