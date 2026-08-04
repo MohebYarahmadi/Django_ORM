@@ -266,8 +266,31 @@ def get_first_product(request):
 	
 
 # ==========================================
-# Schema: Product Most Recently
+# Schema: All Products - Excluding Active Products
 # ==========================================
+class ProductNotActiveOut(Schema):
+	id: int
+	name: str
+	slug: str
+	description: str
+	price: float
+	is_active: bool
+	# created_at: datetime	# Don't need to be included
+	# ...to use as order_by
 
+
+@router.get(
+	'/product/all-ex-active',
+	tags=['Challenge'],
+	summary='Get All Products Excluded Active',
+	response={200: List[ProductNotActiveOut], 404: ErrorResponse},
+)
+def get_all_ex_active(request):
+	queryset = Product.objects.exclude(is_active=True)
+
+	if not queryset.exists():
+		return {'error': 'Nothing found'}
+
+	return queryset
 
 #endregion
