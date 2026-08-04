@@ -1,6 +1,7 @@
 from typing import Optional, List
 from ninja import Router, Schema
 from django.utils.text import slugify
+from datetime import datetime
 
 from inventory.models import (
 	Category, Product, StockManagement,
@@ -234,7 +235,32 @@ def get_product_only_name_price(request):
 	return queryset
 
 
+# ==========================================
+# Schema: Product Onlu Name and Price Ordered
+# ==========================================
+class ProductFirstOut(Schema):
+	id: int
+	name: str
+	slug: str
+	description: str
+	price: float
+	# created_at: datetime	# Don't need to be included
+	# ...to use as order_by
 
 
+@router.get(
+	'/product/get-first',
+	tags=['Challenge'],
+	summary='Get the frist products created by data',
+	response={200: ProductFirstOut, 404: ErrorResponse},
+)
+def get_first_product(request):
+	queryset = Product.objects.order_by('created_at').first()
+
+	if queryset is None:
+		return 404, {'detail', 'No match found'}
+
+	return queryset
+	
 
 #endregion
