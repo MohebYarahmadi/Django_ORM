@@ -211,4 +211,30 @@ def get_all_products_sorted(request):
 	return queryset
 
 
+# ==========================================
+# Schema: Product Onlu Name and Price Ordered
+# ==========================================
+class ProductOnlyNamePriceOut(Schema):
+	name: str
+	price: float
+
+
+@router.get(
+	'/product/only-name-price',
+	tags=['Challenge'],
+	summary='Get all products with only name and price ordered by price DSC',
+	response=List[ProductOnlyNamePriceOut],
+)
+def get_product_only_name_price(request):
+	queryset = Product.objects.only('name', 'price').order_by('-price')
+
+	if not queryset.exists():
+		return {'error': 'There is no product'}
+
+	return queryset
+
+
+
+
+
 #endregion
