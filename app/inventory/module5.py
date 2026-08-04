@@ -1,6 +1,7 @@
 from typing import Optional, List
 from ninja import Router, Schema
 from django.utils.text import slugify
+from datetime import datetime
 
 from inventory.models import (
 	Category, Product, StockManagement,
@@ -9,14 +10,18 @@ from inventory.models import (
 
 router = Router()
 
-#region CATEGORY
+
+#region GENERAL SCHEMAS
 # ==========================================
 # Schema: 404 Error Schema
 # ==========================================
 class ErrorResponse(Schema):
 	detail: str
 
+#endregion
 
+
+#region CATEGORY
 # ==========================================
 # Schema: Category Out
 # ==========================================
@@ -179,3 +184,145 @@ def get_first_active_cat_by_name(request):
 
 #endregion
 
+#region PRODUCTS
+# ==========================================
+# Schema: Product Get All Sorted Out
+# ==========================================
+class ProductAllSortedOut(Schema):
+	id: int
+	name: str
+	slug: str
+	description: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/product/all',
+	tags=['Challenge'],
+	summary='Get all products sorted by name DSC',
+	response=List[ProductAllSortedOut],
+)
+def get_all_products_sorted(request):
+	queryset = Product.objects.all().filter(is_active=True).order_by('-name')
+
+	if not queryset.exists():
+		return {'error': 'There is no product'}
+
+	return queryset
+
+
+# ==========================================
+# Schema: Product Onlu Name and Price Ordered
+# ==========================================
+class ProductOnlyNamePriceOut(Schema):
+	name: str
+	price: float
+
+
+@router.get(
+	'/product/only-name-price',
+	tags=['Challenge'],
+	summary='Get all products with only name and price ordered by price DSC',
+	response=List[ProductOnlyNamePriceOut],
+)
+def get_product_only_name_price(request):
+	queryset = Product.objects.only('name', 'price').order_by('-price')
+
+	if not queryset.exists():
+		return {'error': 'There is no product'}
+
+	return queryset
+
+
+# ==========================================
+# Schema: Product First Created
+# ==========================================
+class ProductFirstOut(Schema):
+	id: int
+	name: str
+	slug: str
+	description: str
+	price: float
+	# created_at: datetime	# Don't need to be included
+	# ...to use as order_by
+
+
+@router.get(
+	'/product/get-first',
+	tags=['Challenge'],
+	summary='Get the frist products created by data',
+	response={200: ProductFirstOut, 404: ErrorResponse},
+)
+def get_first_product(request):
+	queryset = Product.objects.order_by('created_at').first()	# First
+	# queryset = Product.objects.order_by('-created_at').first() # Most recently added
+	# queryset = Product.objects.order_by('created_at').last() # OR: Most recently added
+
+	if queryset is None:
+		return 404, {'detail', 'No match found'}
+
+	return queryset
+	
+
+# ==========================================
+# Schema: All Products - Excluding Active Products
+# ==========================================
+class ProductNotActiveOut(Schema):
+	id: int
+	name: str
+	slug: str
+	description: str
+	price: float
+	is_active: bool
+	# created_at: datetime	# Don't need to be included
+	# ...to use as order_by
+
+
+@router.get(
+	'/product/all-ex-active',
+	tags=['Challenge'],
+	summary='Get All Products Excluded Active',
+	response={200: List[ProductNotActiveOut], 404: ErrorResponse},
+)
+def get_all_ex_active(request):
+	queryset = Product.objects.exclude(is_active=True)
+
+	if not queryset.exists():
+		return {'error': 'Nothing found'}
+
+	return queryset
+
+
+# ==========================================
+# Schema: Product Price of 19.99
+# Exclude: category 3
+# ==========================================
+class Product1999(Schema):
+	id: int
+	name: str
+	slug: str
+	description: str
+	price: float
+	is_active: bool
+
+
+@router.get(
+	'/product/price-1999-exclude-cat3',
+	tags=['Challenge'],
+	summary='Get All Products With Price 19.99 Ex cat3',
+	response={200: List[Product1999], 404: ErrorResponse},
+)
+def get_all_1999_ex_cat3(request):
+	queryset = Product.objects.filter(price=19.99).exclude(category=3)
+
+	if not queryset.exists():
+		return {'error': 'There is no product 19.99'}
+
+	return queryset
+
+
+
+
+
+#endregion
