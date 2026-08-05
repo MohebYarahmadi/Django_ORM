@@ -199,4 +199,62 @@ def get_filtered_products_with_q(
 
 	return Product.objects.filter(filters).order_by('name')
 
+# ==========================================
+# Schema: Filter products using negation with Q objects
+# ==========================================
+class ProductOutNegated(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+	class Config:
+		from_attributes = True
+
+@router.get(
+	'/products/q/negated',
+	tags=['module6'],
+	summary='Filter products using NOT conditions with Q objects.',
+	response=List[ProductOutNegated]
+)
+def get_products_with_negations(
+	request,
+	active: bool = None,
+	exclude_digital: bool = False,
+	digital_only: bool = None,
+	min_price: float = None,
+	max_price: float = None,
+	outside_price_range: bool = False,
+	exclude_keyword: bool = False,
+	# price_match: bool = False,
+	name_or_slug: Optional[str] = None
+):
+	filters = Q()
+
+	# Optionale: only active or inactive
+	if active is not None:
+		filters &= Q(is_active=True)
+
+	# Exclude digital products if requested
+	if digital_only:
+		filters &= ~Q(is_digital=digital_only)
+
+	# Price filtering
+	if min_price is not None and max_price is not None and outside_price_range:
+		# Outside the range = less than min OR greate than max
+		filters &= Q(price__lt=min_price) | Q(price__gt=max_price)
+	else:
+		if min_price is not None:
+			filters &= Q(price__gte=min_price)
+		if max_price is not None:
+			filters &= Q(price__lte=max_price)
+
+	# Keyword filtering on name or slug
+	if name_or_slug:
+		keyword_filter = Q(name__icontains=name_or_slug) | Q(slug__icontains=name_or_slug)
+		filters &= ~keyword_filter if exclude_keyword else keyword_filter
+
+	return Product.objects.filter(filters).order_by('name')
 #endregion
