@@ -1,4 +1,5 @@
 from typing import Optional, List
+from django.db.models import Q
 from ninja import Router, Schema
 from django.utils.text import slugify
 from datetime import datetime
@@ -78,6 +79,66 @@ def get_filtered_categories(
 			qs = qs.filter(parent__isnull=True)
 
 	return qs
+
+# ==========================================
+# Schema: Filter categories by active status, level range, parent existence Q Object
+# ==========================================
+class CategoryQOut(Schema):
+	id: int
+	name: str
+	slug: str
+	level: int
+	is_active: bool
+	parent_id: Optional[int]
+
+@router.get(
+	'/categories/q/combined',
+	tags=['module6'],
+	summary='Filter categories using Q object combinations (AND / OR logic)',
+	response=List[CategoryQOut]
+)
+def get_filtered_categories_with_q(
+	request,
+	active: bool = None,
+	min_level: int = None,
+	max_level: int = None,
+	has_parent: bool = None,
+	level_match: bool = False,	# New optional flag for OR condition
+):
+	filters = Q()	# create an empty Q object
+
+	# Base condition: active status
+	if active is not None:
+		filters &= Q(is_active=active)
+
+	# Build separate condition group: OR between level filters
+	level_filter = Q()
+
+	if min_level is not None:
+		level_filter |= Q(level__gte=min_level)
+
+	if max_level is not None:
+		level_filter |= Q(level__lte=max_level)
+
+	# Apply OR condition only if flag is True and at least one level filter exists
+	if level_match and level_filter:
+		filters &= level_filter
+	else:
+		# If not using OR, apply level filters as AND
+		if min_level is not None:
+			filters &= Q(level__gte=min_level)
+		if max_level is not None:
+			filters &= Q(level__lte=max_level)
+
+
+	# Handle parent existence filter
+	if has_parent is not None:
+		if has_parent:
+			filters &= Q(parent__isnull=not has_parent)
+
+	return Category.objects.filter(filters).order_by('level')
+
+
 
 
 #endregion
