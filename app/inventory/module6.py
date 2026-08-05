@@ -1,4 +1,5 @@
 from typing import Optional, List
+from django.db.models import Q
 from ninja import Router, Schema
 from django.utils.text import slugify
 from datetime import datetime
@@ -79,5 +80,181 @@ def get_filtered_categories(
 
 	return qs
 
+# ==========================================
+# Schema: Filter categories by active status, level range, parent existence Q Object
+# ==========================================
+class CategoryQOut(Schema):
+	id: int
+	name: str
+	slug: str
+	level: int
+	is_active: bool
+	parent_id: Optional[int]
 
+@router.get(
+	'/categories/q/combined',
+	tags=['module6'],
+	summary='Filter categories using Q object combinations (AND / OR logic)',
+	response=List[CategoryQOut]
+)
+def get_filtered_categories_with_q(
+	request,
+	active: bool = None,
+	min_level: int = None,
+	max_level: int = None,
+	has_parent: bool = None,
+	level_match: bool = False,	# New optional flag for OR condition
+):
+	filters = Q()	# create an empty Q object
+
+	# Base condition: active status
+	if active is not None:
+		filters &= Q(is_active=active)
+
+	# Build separate condition group: OR between level filters
+	level_filter = Q()
+
+	if min_level is not None:
+		level_filter |= Q(level__gte=min_level)
+
+	if max_level is not None:
+		level_filter |= Q(level__lte=max_level)
+
+	# Apply OR condition only if flag is True and at least one level filter exists
+	if level_match and level_filter:
+		filters &= level_filter
+	else:
+		# If not using OR, apply level filters as AND
+		if min_level is not None:
+			filters &= Q(level__gte=min_level)
+		if max_level is not None:
+			filters &= Q(level__lte=max_level)
+
+
+	# Handle parent existence filter
+	if has_parent is not None:
+		if has_parent:
+			filters &= Q(parent__isnull=not has_parent)
+
+	return Category.objects.filter(filters).order_by('level')
+
+#endregion
+
+
+#region PRODUCT
+# ==========================================
+# Schema: Filter products using Q objec combinations (AND/OR logic)
+# ==========================================
+class ProductOutCombined(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/q/combined',
+	tags=['module6'],
+	summary='Filter products using Q object combinations (AND / OR logic)',
+	response=List[ProductOutCombined]
+)
+def get_filtered_products_with_q(
+	request,
+	active: bool = None,
+	digital_only: bool = None,
+	min_price: float = None,
+	max_price: float = None,
+	price_match: bool = False,
+	name_or_slug: Optional[str] = None
+):
+	filters = Q()
+
+	# Base filter: active flag
+	if active is not None:
+		filters &= Q(is_active=active)
+
+	# Digital products
+	if digital_only is not None:
+		filters &= Q(is_digital=digital_only)
+
+	# OR logic for price range
+	price_filter = Q()
+	if min_price is not None:
+		price_filter |= Q(price__gte=min_price)
+	if max_price is not None:
+		price_filter |= Q(price__lte=max_price)
+
+	if price_match and price_filter:
+		filters &= price_filter
+	else:
+		if min_price is not None:
+			filters &= Q(price__gte=min_price)
+		if max_price is not None:
+			filters &= Q(price__lte=max_price)
+
+	# Search by name or slug using OR
+	if name_or_slug:
+		filters &= Q(name__icontains=name_or_slug) | Q(slug__icontains=name_or_slug)
+
+	return Product.objects.filter(filters).order_by('name')
+
+# ==========================================
+# Schema: Filter products using negation with Q objects
+# ==========================================
+class ProductOutNegated(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+	class Config:
+		from_attributes = True
+
+@router.get(
+	'/products/q/negated',
+	tags=['module6'],
+	summary='Filter products using NOT conditions with Q objects.',
+	response=List[ProductOutNegated]
+)
+def get_products_with_negations(
+	request,
+	active: bool = None,
+	exclude_digital: bool = False,
+	digital_only: bool = None,
+	min_price: float = None,
+	max_price: float = None,
+	outside_price_range: bool = False,
+	exclude_keyword: bool = False,
+	# price_match: bool = False,
+	name_or_slug: Optional[str] = None
+):
+	filters = Q()
+
+	# Optionale: only active or inactive
+	if active is not None:
+		filters &= Q(is_active=True)
+
+	# Exclude digital products if requested
+	if digital_only:
+		filters &= ~Q(is_digital=digital_only)
+
+	# Price filtering
+	if min_price is not None and max_price is not None and outside_price_range:
+		# Outside the range = less than min OR greate than max
+		filters &= Q(price__lt=min_price) | Q(price__gt=max_price)
+	else:
+		if min_price is not None:
+			filters &= Q(price__gte=min_price)
+		if max_price is not None:
+			filters &= Q(price__lte=max_price)
+
+	# Keyword filtering on name or slug
+	if name_or_slug:
+		keyword_filter = Q(name__icontains=name_or_slug) | Q(slug__icontains=name_or_slug)
+		filters &= ~keyword_filter if exclude_keyword else keyword_filter
+
+	return Product.objects.filter(filters).order_by('name')
 #endregion
