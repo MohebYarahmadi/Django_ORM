@@ -138,7 +138,65 @@ def get_filtered_categories_with_q(
 
 	return Category.objects.filter(filters).order_by('level')
 
+#endregion
 
 
+#region PRODUCT
+# ==========================================
+# Schema: Filter products using Q objec combinations (AND/OR logic)
+# ==========================================
+class ProductOutCombined(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/q/combined',
+	tags=['module6'],
+	summary='Filter products using Q object combinations (AND / OR logic)',
+	response=List[ProductOutCombined]
+)
+def get_filtered_products_with_q(
+	request,
+	active: bool = None,
+	digital_only: bool = None,
+	min_price: float = None,
+	max_price: float = None,
+	price_match: bool = False,
+	name_or_slug: Optional[str] = None
+):
+	filters = Q()
+
+	# Base filter: active flag
+	if active is not None:
+		filters &= Q(is_active=active)
+
+	# Digital products
+	if digital_only is not None:
+		filters &= Q(is_digital=digital_only)
+
+	# OR logic for price range
+	price_filter = Q()
+	if min_price is not None:
+		price_filter |= Q(price__gte=min_price)
+	if max_price is not None:
+		price_filter |= Q(price__lte=max_price)
+
+	if price_match and price_filter:
+		filters &= price_filter
+	else:
+		if min_price is not None:
+			filters &= Q(price__gte=min_price)
+		if max_price is not None:
+			filters &= Q(price__lte=max_price)
+
+	# Search by name or slug using OR
+	if name_or_slug:
+		filters &= Q(name__icontains=name_or_slug) | Q(slug__icontains=name_or_slug)
+
+	return Product.objects.filter(filters).order_by('name')
 
 #endregion
