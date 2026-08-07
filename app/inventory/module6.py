@@ -257,4 +257,42 @@ def get_products_with_negations(
 		filters &= ~keyword_filter if exclude_keyword else keyword_filter
 
 	return Product.objects.filter(filters).order_by('name')
+
+
+
+# ==========================================
+# Schema: Flexible name pattern filtering
+# ==========================================
+class ProductOutPatternSearch(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/q/name-pattern',
+	tags=['module6'],
+	summary='Filter products by name with selectable pattern matching.',
+	response=List[ProductOutPatternSearch]
+)
+def search_products_by_name_pattern(
+	request,
+	name: str,
+	match_type: str = 'all',	# Options: all, start, end
+):
+	filters = Q()
+
+	if match_type == 'start':
+		filters &= Q(name__istartswith=name)
+	elif match_type == 'end':
+		filters &= Q(name__iendswith=name)
+	else:
+		filters &= Q(name__icontains=name)
+
+	return Product.objects.filter(filters).order_by('name')
+
+
+
 #endregion
