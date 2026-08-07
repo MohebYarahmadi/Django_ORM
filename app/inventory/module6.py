@@ -1,6 +1,6 @@
 from typing import Optional, List
 from django.db.models import Q
-from ninja import Router, Schema
+from ninja import Router, Schema, Query
 from django.utils.text import slugify
 from datetime import datetime
 
@@ -293,6 +293,42 @@ def search_products_by_name_pattern(
 
 	return Product.objects.filter(filters).order_by('name')
 
+
+# ==========================================
+# Schema: Filter by ID list and active status
+# ==========================================
+class ProductOutByIdList(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/q/by-ids',
+	tags=['module6'],
+	summary='Filter products by a list of IDs and active status.',
+	response=List[ProductOutByIdList]
+)
+def filter_products_by_ids(
+	request,
+	ids: List[int] = Query(...),   # Query(required=True)
+	inactive: Optional[bool] = None
+):
+	filters = Q()
+
+	# Filter by provided ID list
+	if ids:
+		filters &= Q(id__in=ids)
+	else:
+		return []
+
+	# Optinal: Include only inactive or active products
+	if inactive is not None:
+		filters &= Q(is_active=not inactive)
+
+	return Product.objects.filter(filters).order_by('name')
 
 
 #endregion
