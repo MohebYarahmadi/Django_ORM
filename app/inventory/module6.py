@@ -1,3 +1,4 @@
+from pyclbr import Class
 from typing import Optional, List
 from django.db.models import Q
 from ninja import Router, Schema, Query
@@ -329,6 +330,38 @@ def filter_products_by_ids(
 		filters &= Q(is_active=not inactive)
 
 	return Product.objects.filter(filters).order_by('name')
+
+
+# ==========================================
+# Schema: Filter by price range
+# ==========================================
+class ProductOutByPriceRange(Schema):
+	id: int
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+
+@router.get(
+	'/products/q/by-price-range',
+	tags=['module6'],
+	summary='Filter products by a specified price range.',
+	response=List[ProductOutByPriceRange]
+)
+def filter_products_by_price_range(
+	request,
+	min_price: float = Query(..., description="Minimum price for filtering"),
+	max_price: float = Query(..., description="Maximum price for filtering"),
+	active_only: Optional[bool] = Query(None),
+):
+	filters = Q(price__range=(min_price, max_price))
+
+	# Optional filter for is_active
+	if active_only == True:
+		filters &= Q(is_active=True)
+
+	return Product.objects.filter(filters).order_by('price')
 
 
 #endregion
