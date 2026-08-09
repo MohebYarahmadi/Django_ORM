@@ -182,8 +182,20 @@ def paginate_categories_by_page(
 	}
 
 
+# ==========================================
+# Return active categories usin custom manager
+# ==========================================
+@router.get(
+	'/categories/active',
+	tags=['module6'],
+	summary='Return all active categories using custom manager',
+	response=List[CategoryOut]
+)
+def get_active_categories(request):
+	return Category.objects.active().order_by('name')
 
-#endregion
+
+#endregion CATEGORY
 
 
 #region PRODUCT
@@ -438,4 +450,4 @@ def get_products_by_slice_range(
 
 	return Product.objects.filter(filters).order_by('id')[start:end]
 
-#endregion
+#endregion CATEGORY

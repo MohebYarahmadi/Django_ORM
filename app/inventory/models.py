@@ -3,6 +3,13 @@ from django.db.models import UniqueConstraint
 
 
 # -------------------------------------
+# Custom Manager for Category Model
+# -------------------------------------
+class CategoryManager(models.Manager):
+    def active(self):
+        return self.filter(is_active=True)
+
+# -------------------------------------
 # Category Model
 # -------------------------------------
 class Category(models.Model):
@@ -14,6 +21,10 @@ class Category(models.Model):
     # Relations
     parent = models.ForeignKey(
         'self', on_delete=models.RESTRICT, null=True, blank=True)
+
+    # Attach Custom Manager
+    objects = CategoryManager()
+    
 
     class Meta:
         verbose_name = 'Category'
