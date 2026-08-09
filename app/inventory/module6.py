@@ -139,6 +139,50 @@ def get_filtered_categories_with_q(
 
 	return Category.objects.filter(filters).order_by('level')
 
+
+# ==========================================
+# Schema: Paginate filterd categories by page number
+# ==========================================
+class PaginateResponse(Schema):
+	total: int
+	page: int
+	page_size: int
+	items: list[CategoryOut]
+
+@router.get(
+	'/categories/q/paginate',
+	tags=['module6'],
+	summary='Paginate filtered categories by page number',
+	response=PaginateResponse,
+)
+def paginate_categories_by_page(
+	request,
+	page: int = Query(1, ge=1),
+	page_size: int = Query(10, ge=1, le=100),
+	is_active: Optional[bool] = Query(None),
+):
+	filters = Q()
+
+	if is_active is not None:
+		filters &= Q(is_active=is_active)
+
+	qs = Category.objects.filter(filters).order_by('name')
+
+	total = qs.count()
+	# Calculate offset from page number
+	start = (page - 1) * page_size
+	end = start + page_size
+	items = qs[start:end]
+
+	return {
+		'total': total,
+		'page': page,
+		'page_size': page_size,
+		'items': items
+	}
+
+
+
 #endregion
 
 
@@ -363,5 +407,35 @@ def filter_products_by_price_range(
 
 	return Product.objects.filter(filters).order_by('price')
 
+
+# ==========================================
+# Schema: Slice products by position
+# ==========================================
+class ProductOutSlice(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/q/slice-range',
+	tags=['module6'],
+	summary = 'Return products by slice range [start:end]',
+	response = List[ProductOutSlice]
+)
+def get_products_by_slice_range(
+	request,
+	start: int = Query(0, ge=0, description='Start index (inclusive)'),
+	end: int = Query(10, gt=0, description='End index (exclusive)'),
+	active_only: Optional[bool] = Query(None, description='Filter only active products if True'),
+):
+	filters = Q()
+
+	if active_only:
+		filters &= Q(is_active=True)
+
+	return Product.objects.filter(filters).order_by('id')[start:end]
 
 #endregion
