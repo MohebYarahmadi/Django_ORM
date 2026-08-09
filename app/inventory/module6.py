@@ -364,4 +364,34 @@ def filter_products_by_price_range(
 	return Product.objects.filter(filters).order_by('price')
 
 
+# ==========================================
+# Schema: Slice products by position
+# ==========================================
+class ProductOutSlice(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/q/slice-range',
+	tags=['module6'],
+	summary = 'Return products by slice range [start:end]',
+	response = List[ProductOutSlice]
+)
+def get_products_by_slice_range(
+	request,
+	start: int = Query(0, ge=0, description='Start index (inclusive)'),
+	end: int = Query(10, gt=0, description='End index (exclusive)'),
+	active_only: Optional[bool] = Query(None, description='Filter only active products if True'),
+):
+	filters = Q()
+
+	if active_only:
+		filters &= Q(is_active=True)
+
+	return Product.objects.filter(filters).order_by('id')[start:end]
+
 #endregion
