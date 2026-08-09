@@ -1,6 +1,7 @@
+from pyclbr import Class
 from typing import Optional, List
 from django.db.models import Q
-from ninja import Router, Schema
+from ninja import Router, Schema, Query
 from django.utils.text import slugify
 from datetime import datetime
 
@@ -257,4 +258,110 @@ def get_products_with_negations(
 		filters &= ~keyword_filter if exclude_keyword else keyword_filter
 
 	return Product.objects.filter(filters).order_by('name')
+
+
+
+# ==========================================
+# Schema: Flexible name pattern filtering
+# ==========================================
+class ProductOutPatternSearch(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/q/name-pattern',
+	tags=['module6'],
+	summary='Filter products by name with selectable pattern matching.',
+	response=List[ProductOutPatternSearch]
+)
+def search_products_by_name_pattern(
+	request,
+	name: str,
+	match_type: str = 'all',	# Options: all, start, end
+):
+	filters = Q()
+
+	if match_type == 'start':
+		filters &= Q(name__istartswith=name)
+	elif match_type == 'end':
+		filters &= Q(name__iendswith=name)
+	else:
+		filters &= Q(name__icontains=name)
+
+	return Product.objects.filter(filters).order_by('name')
+
+
+# ==========================================
+# Schema: Filter by ID list and active status
+# ==========================================
+class ProductOutByIdList(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/q/by-ids',
+	tags=['module6'],
+	summary='Filter products by a list of IDs and active status.',
+	response=List[ProductOutByIdList]
+)
+def filter_products_by_ids(
+	request,
+	ids: List[int] = Query(...),   # Query(required=True)
+	inactive: Optional[bool] = None
+):
+	filters = Q()
+
+	# Filter by provided ID list
+	if ids:
+		filters &= Q(id__in=ids)
+	else:
+		return []
+
+	# Optinal: Include only inactive or active products
+	if inactive is not None:
+		filters &= Q(is_active=not inactive)
+
+	return Product.objects.filter(filters).order_by('name')
+
+
+# ==========================================
+# Schema: Filter by price range
+# ==========================================
+class ProductOutByPriceRange(Schema):
+	id: int
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+
+@router.get(
+	'/products/q/by-price-range',
+	tags=['module6'],
+	summary='Filter products by a specified price range.',
+	response=List[ProductOutByPriceRange]
+)
+def filter_products_by_price_range(
+	request,
+	min_price: float = Query(..., description="Minimum price for filtering"),
+	max_price: float = Query(..., description="Maximum price for filtering"),
+	active_only: Optional[bool] = Query(None),
+):
+	filters = Q(price__range=(min_price, max_price))
+
+	# Optional filter for is_active
+	if active_only == True:
+		filters &= Q(is_active=True)
+
+	return Product.objects.filter(filters).order_by('price')
+
+
 #endregion
