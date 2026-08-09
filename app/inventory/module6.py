@@ -139,6 +139,50 @@ def get_filtered_categories_with_q(
 
 	return Category.objects.filter(filters).order_by('level')
 
+
+# ==========================================
+# Schema: Paginate filterd categories by page number
+# ==========================================
+class PaginateResponse(Schema):
+	total: int
+	page: int
+	page_size: int
+	items: list[CategoryOut]
+
+@router.get(
+	'/categories/q/paginate',
+	tags=['module6'],
+	summary='Paginate filtered categories by page number',
+	response=PaginateResponse,
+)
+def paginate_categories_by_page(
+	request,
+	page: int = Query(1, ge=1),
+	page_size: int = Query(10, ge=1, le=100),
+	is_active: Optional[bool] = Query(None),
+):
+	filters = Q()
+
+	if is_active is not None:
+		filters &= Q(is_active=is_active)
+
+	qs = Category.objects.filter(filters).order_by('name')
+
+	total = qs.count()
+	# Calculate offset from page number
+	start = (page - 1) * page_size
+	end = start + page_size
+	items = qs[start:end]
+
+	return {
+		'total': total,
+		'page': page,
+		'page_size': page_size,
+		'items': items
+	}
+
+
+
 #endregion
 
 
