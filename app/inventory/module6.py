@@ -488,6 +488,27 @@ def second_approach():
 	return products
 
 
+def third_approach():
+	"""
+	Using queryset Union method
+
+	It lets us combined the results of two or more query sets, similar to the 
+	SQL Union command which is happening behind the scene here
+	"""
+
+	# Query for the first five active products ordered by ID ascending
+	first_five_queryset = Product.objects.filter(is_active=True).order_by('id')[:5]
+
+	# Query for the last five active products ordered by ID descending
+	last_five_queryset = Product.objects.filter(is_active=True).order_by('-id')[:5]
+
+	# Combine the two queryset using .union()
+	# By default, union() performs a UNION DISTINCT, removing duplicates.
+	# If you needed UNION ALL, you'd use .union(..., all=True)
+	combined_products = first_five_queryset.union(last_five_queryset)
+
+	# The combined_products is now a QuerySet, which can be directly serialized
+	return combined_products
 
 class ProductOut(Schema):
 	id: int
@@ -504,8 +525,9 @@ class ProductOut(Schema):
 	response=List[ProductOut]
 )
 def get_5_first_last_products(request):
-	# products = first_approach()
-	products = second_approach()
+	# products = first_approach()	# Not good for large datasets
+	# products = second_approach()	# Good and Readable
+	products = third_approach()	# Efficient, Very Clean, Ordering not quaranteed
 
 	return products
 
