@@ -9,6 +9,11 @@ class CategoryManager(models.Manager):
     def active(self):
         return self.filter(is_active=True)
 
+
+class ProductManager(models.Manager):
+    def active(self):
+        return self.filter(is_active=True)
+
 # -------------------------------------
 # Category Model
 # -------------------------------------
@@ -87,6 +92,8 @@ class Product(models.Model):
     #     PromotionEvent,
     #     through="ProductPromotionEvent",  # use our custom link model
     # )
+
+    objects = ProductManager()
 
     class Meta:
         ordering = ['name']

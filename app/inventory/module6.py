@@ -458,6 +458,45 @@ def get_products_by_slice_range(
 #region CHALLENGES
 
 # ==========================================
+# Task: Retrieve the First and Last Product Entries
+# Filter[1]: Active products only
+# Order By: id
+# Fields: All Fields
+# Extra[1]: Should not return duplicate records.
+# ==========================================
+def first_approach():
+	queryset = Product.objects.active().order_by('id')
+	total = queryset.count()
+
+	first_five = list(queryset[:5])
+	last_five = list(queryset[max(total - 5, 0):])
+
+	# Make sure no duplicate included
+	products = list({p.id: p for p in first_five + last_five}.values())
+	return products
+
+
+class ProductOut(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/get-5-fl',
+	tags=['Challenge_6'],
+	summary='Get the First and Last 5 Added Products',
+	response=List[ProductOut]
+)
+def get_5_first_last_products(request):
+	products = first_approach()
+
+	return products
+
+
+# ==========================================
 # Task: Retrieve Orders from the last 30 days
 # Return: ALl Fields
 # ==========================================
