@@ -476,6 +476,19 @@ def first_approach():
 	return products
 
 
+def second_approach():
+	first_five = Product.objects.active().order_by('id')[:5]
+	last_five = Product.objects.active().order_by('-id')[:5]
+
+	combined = list( {p.id: p for p in list(first_five) + list(last_five)}.values() )
+
+	# Sort the result by ID (ASC)
+	products = sorted(combined, key=lambda p: p.id)
+
+	return products
+
+
+
 class ProductOut(Schema):
 	id: int
 	name: str
@@ -491,7 +504,8 @@ class ProductOut(Schema):
 	response=List[ProductOut]
 )
 def get_5_first_last_products(request):
-	products = first_approach()
+	# products = first_approach()
+	products = second_approach()
 
 	return products
 
