@@ -3,7 +3,8 @@ from typing import Optional, List
 from django.db.models import Q
 from ninja import Router, Schema, Query
 from django.utils.text import slugify
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils.timezone import now
 
 from inventory.models import (
 	Category, Product, StockManagement,
@@ -451,3 +452,32 @@ def get_products_by_slice_range(
 	return Product.objects.filter(filters).order_by('id')[start:end]
 
 #endregion CATEGORY
+
+
+
+#region CHALLENGES
+
+# ==========================================
+# Task: Retrieve Orders from the last 30 days
+# Return: ALl Fields
+# ==========================================
+class OrderOut(Schema):
+	created: datetime
+
+
+@router.get(
+	'/orders/get-30',
+	tags=['Challenge_6'],
+	summary='Get Orders From the Last 30 Days',
+	response=List[OrderOut]
+)
+def get_order_30(request):
+	thirty_days_ago = now() - timedelta(days=30)	# Calculate 30 days ago
+
+	orders = Order.objects.filter(created_at__gte=thirty_days_ago)
+
+	return orders
+
+	
+
+#endregion CHALLENGES
