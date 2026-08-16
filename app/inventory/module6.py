@@ -517,6 +517,7 @@ class ProductOut(Schema):
 	is_digital: bool
 	is_active: bool
 	price: float
+	category_id: int
 
 @router.get(
 	'/products/get-5-fl',
@@ -553,6 +554,102 @@ def get_order_30(request):
 
 	return orders
 
-	
+
+# ==========================================
+# Task: Find Products in Multiple Categories
+# Filter: Category IDs: 1, 4, 8, 11
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/product/get-product-mcat',
+	tags=['Challenge_6'],
+	summary='Get Products in Multiple Categories',
+	response=List[ProductOut]
+)
+def get_products_multiple_categories(request):
+	category_ids = [1, 4, 8, 11]
+
+	products = Product.objects.filter(category_id__in=category_ids).distinct()
+
+	return products
+
+
+# ==========================================
+# Task: Return a list of Products Price between 50 and 1000
+# Filter: price >= 50 and price <= 1000
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/product/get-product-price-filter',
+	tags=['Challenge_6'],
+	summary='Get a list of Products price between 50 and 100',
+	response=List[ProductOut]
+)
+def get_products_price_filter(request):
+
+	filters = Q(price__gte=50) & Q(price__lte=100)
+	products = Product.objects.filter(filters)
+
+	# products = Product.objects.filter(price__gte=50, price__lte=100)	# will perform AND
+
+	return products
+
+
+# ==========================================
+# Task: Exclude Products Priced 19.99 and Under 100
+# logic: price != 19.99 AND price < 100
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/product/get-product-exclude-199-100',
+	tags=['Challenge_6'],
+	summary='Exclude Products Priced 19.99 and Under 100',
+	response=List[ProductOut]
+)
+def get_product_price_under100_ex1999(request):
+	products = Product.objects.filter(price__lt=100).exclude(price=19.99)
+	return products
+
+
+# ==========================================
+# Task: Return Users Named janedoe or johndoe
+# Return: ALl Fields
+# ==========================================
+class UsersOut(Schema):
+	username: str
+	email: str
+
+@router.get(
+	'/users/get-name-jondoe',
+	tags=['Challenge_6'],
+	summary='Return Users Named janedoe or johndoe',
+	response=List[UsersOut]
+)
+def get_jondoe_users(request):
+	# Another Solution
+	users = User.objects.filter(username__in=['janedoe', 'johndoe']).only('username', 'email')
+
+	# My Solution
+	# filters = Q(username__contains='janedoe') | Q(username__contains='johndoe').only('username', 'email')
+	# users = User.objects.filter(filters)
+
+	return users
+
+
+# ==========================================
+# Task: Get Products Name Starting with the letter 'W'
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/products/get-name-stw-W',
+	tags=['Challenge_6'],
+	summary="Get Products Name Starting with the letter 'W'",
+	response=List[ProductOut]
+)
+def get_product_stw_W(request):
+	products = Product.objects.filter(name__startswith='W')
+
+	return products
+
 
 #endregion CHALLENGES
