@@ -682,6 +682,27 @@ def get_top10_expensive(request):
 	return products
 
 
+# ==========================================
+# Task: Finding Users with emails ending in 'example.com'
+# Return: id, username, email
+# ==========================================
+class UserOutId(Schema):
+	id: int
+	username: str
+	email: str
+
+@router.get(
+	'/users/get-email-end-example',
+	tags=['Challenge_6'],
+	summary="Finding Users with emails ending in 'example.com'",
+	response=List[UserOutId]
+)
+def get_users_email_end_example(request):
+	users = User.objects.filter(email__iendswith='example.com').only('id', 'username', 'email')
+
+	return users
+
+
 
 
 #endregion CHALLENGES
