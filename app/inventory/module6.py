@@ -652,4 +652,70 @@ def get_product_stw_W(request):
 	return products
 
 
+# ==========================================
+# Task: Find Products ending with the letter 'e'
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/products/get-name-end-e',
+	tags=['Challenge_6'],
+	summary="Find Products ending with the letter 'e'",
+	response=List[ProductOut]
+)
+def get_product_end_e(request):
+	products = Product.objects.filter(name__endswith='e')
+	return products
+
+
+# ==========================================
+# Task: Show the Top 10 Most Expensive active products
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/products/get-top10-expensives',
+	tags=['Challenge_6'],
+	summary="Show the Top 10 Most Expensive active products",
+	response=List[ProductOut]
+)
+def get_top10_expensive(request):
+	products = Product.objects.active().order_by('-price')[:10]
+	return products
+
+
+# ==========================================
+# Task: Finding Users with emails ending in 'example.com'
+# Return: id, username, email
+# ==========================================
+class UserOutId(Schema):
+	id: int
+	username: str
+	email: str
+
+@router.get(
+	'/users/get-email-end-example',
+	tags=['Challenge_6'],
+	summary="Finding Users with emails ending in 'example.com'",
+	response=List[UserOutId]
+)
+def get_users_email_end_example(request):
+	users = User.objects.filter(email__iendswith='example.com').only('id', 'username', 'email')
+
+	return users
+
+
+# ==========================================
+# Task: Return the 20th most expensive product
+# Return: All fields
+# ==========================================
+@router.get(
+	'/products/get-20th-expensive',
+	tags=['Challenge_6'],
+	summary="Return the 20th most expensive product",
+	response=ProductOut
+)
+def get_20th_expensive(request):
+	product = Product.objects.order_by('-price')[19]	# return single product
+	# product = Product.objects.order_by('-price')[19:20]	# return a list
+	return product
+
 #endregion CHALLENGES
