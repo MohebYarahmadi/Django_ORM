@@ -586,12 +586,28 @@ def get_products_multiple_categories(request):
 	response=List[ProductOut]
 )
 def get_products_price_filter(request):
-	
+
 	filters = Q(price__gte=50) & Q(price__lte=100)
 	products = Product.objects.filter(filters)
 
 	# products = Product.objects.filter(price__gte=50, price__lte=100)	# will perform AND
 
+	return products
+
+
+# ==========================================
+# Task: Exclude Products Priced 19.99 and Under 100
+# logic: price != 19.99 AND price < 100
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/orders/get-product-exclude-199-100',
+	tags=['Challenge_6'],
+	summary='Exclude Products Priced 19.99 and Under 100',
+	response=List[ProductOut]
+)
+def get_product_price_under100_ex1999(request):
+	products = Product.objects.filter(price__lt=100).exclude(price=19.99)
 	return products
 
 
