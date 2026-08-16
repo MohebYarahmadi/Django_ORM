@@ -561,7 +561,7 @@ def get_order_30(request):
 # Return: ALl Fields
 # ==========================================
 @router.get(
-	'/orders/get-product-mcat',
+	'/product/get-product-mcat',
 	tags=['Challenge_6'],
 	summary='Get Products in Multiple Categories',
 	response=List[ProductOut]
@@ -580,7 +580,7 @@ def get_products_multiple_categories(request):
 # Return: ALl Fields
 # ==========================================
 @router.get(
-	'/orders/get-product-price-filter',
+	'/product/get-product-price-filter',
 	tags=['Challenge_6'],
 	summary='Get a list of Products price between 50 and 100',
 	response=List[ProductOut]
@@ -601,7 +601,7 @@ def get_products_price_filter(request):
 # Return: ALl Fields
 # ==========================================
 @router.get(
-	'/orders/get-product-exclude-199-100',
+	'/product/get-product-exclude-199-100',
 	tags=['Challenge_6'],
 	summary='Exclude Products Priced 19.99 and Under 100',
 	response=List[ProductOut]
@@ -635,6 +635,21 @@ def get_jondoe_users(request):
 
 	return users
 
+
+# ==========================================
+# Task: Get Products Name Starting with the letter 'W'
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/products/get-name-stw-W',
+	tags=['Challenge_6'],
+	summary="Get Products Name Starting with the letter 'W'",
+	response=List[ProductOut]
+)
+def get_product_stw_W(request):
+	products = Product.objects.filter(name__startswith='W')
+
+	return products
 
 
 #endregion CHALLENGES
