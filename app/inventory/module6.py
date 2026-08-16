@@ -703,6 +703,19 @@ def get_users_email_end_example(request):
 	return users
 
 
-
+# ==========================================
+# Task: Return the 20th most expensive product
+# Return: All fields
+# ==========================================
+@router.get(
+	'/products/get-20th-expensive',
+	tags=['Challenge_6'],
+	summary="Return the 20th most expensive product",
+	response=ProductOut
+)
+def get_20th_expensive(request):
+	product = Product.objects.order_by('-price')[19]	# return single product
+	# product = Product.objects.order_by('-price')[19:20]	# return a list
+	return product
 
 #endregion CHALLENGES
