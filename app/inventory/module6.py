@@ -611,5 +611,30 @@ def get_product_price_under100_ex1999(request):
 	return products
 
 
+# ==========================================
+# Task: Return Users Named janedoe or johndoe
+# Return: ALl Fields
+# ==========================================
+class UsersOut(Schema):
+	username: str
+	email: str
+
+@router.get(
+	'/users/get-name-jondoe',
+	tags=['Challenge_6'],
+	summary='Return Users Named janedoe or johndoe',
+	response=List[UsersOut]
+)
+def get_jondoe_users(request):
+	# Another Solution
+	users = User.objects.filter(username__in=['janedoe', 'johndoe']).only('username', 'email')
+
+	# My Solution
+	# filters = Q(username__contains='janedoe') | Q(username__contains='johndoe').only('username', 'email')
+	# users = User.objects.filter(filters)
+
+	return users
+
+
 
 #endregion CHALLENGES
