@@ -517,6 +517,7 @@ class ProductOut(Schema):
 	is_digital: bool
 	is_active: bool
 	price: float
+	category_id: int
 
 @router.get(
 	'/products/get-5-fl',
@@ -553,6 +554,28 @@ def get_order_30(request):
 
 	return orders
 
-	
+
+# ==========================================
+# Task: Find Products in Multiple Categories
+# Filter: Category IDs: 1, 4, 8, 11
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/orders/get-product-mcat',
+	tags=['Challenge_6'],
+	summary='Get Products in Multiple Categories',
+	response=List[ProductOut]
+)
+def get_products_multiple_categories(request):
+	category_ids = [1, 4, 8, 11]
+
+	products = Product.objects.filter(category_id__in=category_ids).distinct()
+
+	return products
+
+
+
+
+
 
 #endregion CHALLENGES
