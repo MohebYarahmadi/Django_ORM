@@ -574,7 +574,25 @@ def get_products_multiple_categories(request):
 	return products
 
 
+# ==========================================
+# Task: Return a list of Products Price between 50 and 1000
+# Filter: price >= 50 and price <= 1000
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/orders/get-product-price-filter',
+	tags=['Challenge_6'],
+	summary='Get a list of Products price between 50 and 100',
+	response=List[ProductOut]
+)
+def get_products_price_filter(request):
+	
+	filters = Q(price__gte=50) & Q(price__lte=100)
+	products = Product.objects.filter(filters)
 
+	# products = Product.objects.filter(price__gte=50, price__lte=100)	# will perform AND
+
+	return products
 
 
 
