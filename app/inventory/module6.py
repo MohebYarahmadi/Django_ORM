@@ -3,7 +3,8 @@ from typing import Optional, List
 from django.db.models import Q
 from ninja import Router, Schema, Query
 from django.utils.text import slugify
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils.timezone import now
 
 from inventory.models import (
 	Category, Product, StockManagement,
@@ -182,8 +183,20 @@ def paginate_categories_by_page(
 	}
 
 
+# ==========================================
+# Return active categories usin custom manager
+# ==========================================
+@router.get(
+	'/categories/active',
+	tags=['module6'],
+	summary='Return all active categories using custom manager',
+	response=List[CategoryOut]
+)
+def get_active_categories(request):
+	return Category.objects.active().order_by('name')
 
-#endregion
+
+#endregion CATEGORY
 
 
 #region PRODUCT
@@ -438,4 +451,108 @@ def get_products_by_slice_range(
 
 	return Product.objects.filter(filters).order_by('id')[start:end]
 
-#endregion
+#endregion CATEGORY
+
+
+
+#region CHALLENGES
+
+# ==========================================
+# Task: Retrieve the First and Last Product Entries
+# Filter[1]: Active products only
+# Order By: id
+# Fields: All Fields
+# Extra[1]: Should not return duplicate records.
+# ==========================================
+def first_approach():
+	queryset = Product.objects.active().order_by('id')
+	total = queryset.count()
+
+	first_five = list(queryset[:5])
+	last_five = list(queryset[max(total - 5, 0):])
+
+	# Make sure no duplicate included
+	products = list({p.id: p for p in first_five + last_five}.values())
+	return products
+
+
+def second_approach():
+	first_five = Product.objects.active().order_by('id')[:5]
+	last_five = Product.objects.active().order_by('-id')[:5]
+
+	combined = list( {p.id: p for p in list(first_five) + list(last_five)}.values() )
+
+	# Sort the result by ID (ASC)
+	products = sorted(combined, key=lambda p: p.id)
+
+	return products
+
+
+def third_approach():
+	"""
+	Using queryset Union method
+
+	It lets us combined the results of two or more query sets, similar to the 
+	SQL Union command which is happening behind the scene here
+	"""
+
+	# Query for the first five active products ordered by ID ascending
+	first_five_queryset = Product.objects.filter(is_active=True).order_by('id')[:5]
+
+	# Query for the last five active products ordered by ID descending
+	last_five_queryset = Product.objects.filter(is_active=True).order_by('-id')[:5]
+
+	# Combine the two queryset using .union()
+	# By default, union() performs a UNION DISTINCT, removing duplicates.
+	# If you needed UNION ALL, you'd use .union(..., all=True)
+	combined_products = first_five_queryset.union(last_five_queryset)
+
+	# The combined_products is now a QuerySet, which can be directly serialized
+	return combined_products
+
+class ProductOut(Schema):
+	id: int
+	name: str
+	slug: str
+	is_digital: bool
+	is_active: bool
+	price: float
+
+@router.get(
+	'/products/get-5-fl',
+	tags=['Challenge_6'],
+	summary='Get the First and Last 5 Added Products',
+	response=List[ProductOut]
+)
+def get_5_first_last_products(request):
+	# products = first_approach()	# Not good for large datasets
+	# products = second_approach()	# Good and Readable
+	products = third_approach()	# Efficient, Very Clean, Ordering not quaranteed
+
+	return products
+
+
+# ==========================================
+# Task: Retrieve Orders from the last 30 days
+# Return: ALl Fields
+# ==========================================
+class OrderOut(Schema):
+	created: datetime
+
+
+@router.get(
+	'/orders/get-30',
+	tags=['Challenge_6'],
+	summary='Get Orders From the Last 30 Days',
+	response=List[OrderOut]
+)
+def get_order_30(request):
+	thirty_days_ago = now() - timedelta(days=30)	# Calculate 30 days ago
+
+	orders = Order.objects.filter(created_at__gte=thirty_days_ago)
+
+	return orders
+
+	
+
+#endregion CHALLENGES
