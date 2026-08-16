@@ -652,4 +652,22 @@ def get_product_stw_W(request):
 	return products
 
 
+# ==========================================
+# Task: Find Products ending with the letter 'e'
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/products/get-name-end-e',
+	tags=['Challenge_6'],
+	summary="Find Products ending with the letter 'e'",
+	response=List[ProductOut]
+)
+def get_product_end_e(request):
+	products = Product.objects.filter(name__endswith='e')
+	return products
+
+
+
+
+
 #endregion CHALLENGES
