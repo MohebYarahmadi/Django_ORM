@@ -667,6 +667,20 @@ def get_product_end_e(request):
 	return products
 
 
+# ==========================================
+# Task: Show the Top 10 Most Expensive active products
+# Return: ALl Fields
+# ==========================================
+@router.get(
+	'/products/get-top10-expensives',
+	tags=['Challenge_6'],
+	summary="Show the Top 10 Most Expensive active products",
+	response=List[ProductOut]
+)
+def get_top10_expensive(request):
+	products = Product.objects.active().order_by('-price')[:10]
+	return products
+
 
 
 
