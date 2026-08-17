@@ -137,4 +137,9 @@ SPECTACULAR_SETTINGS = {
 }
 
 
+SHELL_PLUS_PRE_IMPORTS = ['sqlparse']
+SHELL_PLUS_IMPORTS = [
+	'from code_examples.inner_join_forward import *',
+]
+
 LOGGING = {}
