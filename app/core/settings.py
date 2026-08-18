@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'inventory',
+
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -134,5 +136,10 @@ SPECTACULAR_SETTINGS = {
 	'SERVE_INCLUDE_SCHEMA': False,
 }
 
+
+SHELL_PLUS_PRE_IMPORTS = ['sqlparse']
+SHELL_PLUS_IMPORTS = [
+	'from code_examples.inner_join_forward import *',
+]
 
 LOGGING = {}
