@@ -142,6 +142,7 @@ SHELL_PLUS_IMPORTS = [
 	'from code_examples.inner_join_forward import *',
 	'from code_examples.inner_join_reverse import *',
 	'from code_examples.inner_join_one_to_one_forward import *',
+	'from code_examples.inner_join_one_to_one_reverse import *',
 ]
 
 LOGGING = {}
