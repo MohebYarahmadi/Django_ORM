@@ -42,4 +42,10 @@ def get_products_by_id(request, ids: List[int] = Query(...)):
 	qs = Product.objects.select_related('category').filter(id__in=ids)
 	return qs
 
+
+# =====================================
+# Product + Category: Return product and category info by product IDs
+# =====================================
+
+
 #endregion START
